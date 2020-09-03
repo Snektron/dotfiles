@@ -1,0 +1,5 @@
+include "%L"
+
+<Multi_key> <bar> <minus>	: "†" dagger
+<Multi_key> <minus> <bar>	: "†" dagger
+<Multi_key> <p> <y>         : "🐍" python
