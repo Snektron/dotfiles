@@ -1,0 +1,17 @@
+rofi.modi: drun,ssh,combi
+rofi.terminal: alacritty
+rofi.separator-style: dash
+rofi.color-enabled: true
+
+!                  bg       border   seperator
+!rofi.color-window: #222222, #2E2E2E, #4da4c1
+
+!                  bg       fg       bgalt    hlbg     hlfg
+!rofi.color-normal: #222222, #F5F5F5, #222222, #9F4E85, #F5F5F5
+!rofi.color-active: #222222, #815bA4, #222222, #268BD2, #F5F5F5
+!rofi.color-urgent: #222222, #ef6155, #222222, #268BD2, #F5F5F5
+
+!rofi.color-window: #393939, #393939, #4da4c1
+!rofi.color-normal: #393939, #ffffff, #393939, #4da4c1, #ffffff
+!rofi.color-active: #393939, #268bd2, #393939, #4da4c1, #205171
+!rofi.color-urgent: #393939, #f3843d, #393939, #4da4c1, #ffc39c
