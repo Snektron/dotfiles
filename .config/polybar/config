@@ -27,7 +27,7 @@ font-2 = Siji:pixelsize=10;1
 
 [bar/primary]
 inherit = bar/base
-monitor = DisplayPort-0
+monitor = DP-1
 
 modules-left = i3
 modules-center =
@@ -40,7 +40,7 @@ tray-scale = 1.0
 
 [bar/secondary]
 inherit = bar/base
-monitor = HDMI-A-0
+monitor = HDMI-1
 
 modules-left = i3
 
