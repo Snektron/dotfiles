@@ -1,0 +1,2 @@
+#!/bin/bash
+~/.cargo/bin/shotgun -g $(~/.cargo/bin/hacksaw) - | xclip -selection clipboard -t image/png
