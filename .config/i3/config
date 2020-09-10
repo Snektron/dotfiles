@@ -1,6 +1,7 @@
 set $mod Mod4
 
 exec --no-startup-id "killall picom; picom -b --backend glx --vsync"
+exec --no-startup-id "nm-applet"
 
 font pango:Cantarell 10
 
