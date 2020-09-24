@@ -1,0 +1,166 @@
+%YAML 1.2
+---
+name: Zig
+file_extensions:
+  - zig
+first_line_match: "-[*]-( Mode:)? zig -[*]-"
+scope: source.zig
+variables:
+  keywords: |
+    (?x) \b(
+      align|allowzero|and|anyframe|anytype|asm|async|await|break|callconv|catch|comptime|const|continue|defer|else|enum|errdefer|error|export|extern|false|fn|for|if|inline|noalias|noinline|nosuspend|null|or|orelse|packed|pub|resume|return|linksection|struct|suspend|switch|test|threadlocal|true|try|undefined|union|unreachable|usingnamespace|var|volatile|while
+    )\b
+  identifier: '\b[[:alpha:]_][[:alnum:]_]*\b'
+
+contexts:
+  main:
+    - include: global
+
+  global:
+    - include: comments
+    - include: function-call
+    - include: types
+    - include: numbers
+    - include: constants
+    - include: keywords
+    - include: operators
+    - include: strings
+    - include: string-escaped-char
+
+  comments:
+    - match: //
+      scope: punctuation.definition.comment.zig
+      push:
+        - meta_scope: comment.line.double-slash.zig
+        - match: \n
+          pop: true
+    - match: "#!"
+      scope: punctuation.definition.comment.zig
+      push:
+        - meta_scope: comment.line.double-slash.zig
+        - match: \n
+          pop: true
+
+  numbers:
+    - match: \b([0-9_]+)(\.([0-9]+))?([Ee](\+|-)?[0-9]+)?\b
+      scope: constant.numeric.zig
+    - match: \b(0x[0-9a-fA-F_]+)\b
+      scope: constant.numeric.zig
+    - match: \b(0b[01_]+)\b
+      scope: constant.numeric.zig
+
+  keywords:
+    - match: \b(error)\.({{identifier}})\b
+      captures:
+        "1": storage.type.zig
+        "3": entity.name.variable.zig
+    - match: \b(asm|volatile)\b
+      scope: keyword.control.zig
+    - match: \b(continue|switch|for|while)\b
+      scope: keyword.control.zig
+    - match: \b(break)\b(\s+:({{identifier}}))?
+      captures:
+        "1": keyword.control.zig
+        "3": variable.other.zig
+    - match: \b(var|const|packed|extern|export|pub|inline|noinline|align|callconv|noalias)\b
+      scope: storage.modifier.zig
+    - match: \b(defer|errdefer|usingnamespace)\b
+      scope: keyword.control.zig
+    - match: \b(async|await|cancel|suspend|resume)\b
+      scope: keyword.control.zig
+    - match: \b(try|catch|orelse|unreachable|error|if|else|return)\b
+      scope: keyword.control.zig
+    - match: \b(and|or)\b
+      scope: keyword.control.zig
+    - match: \b(undefined|comptime)\b
+      scope: keyword.control.zig
+    - match: \b(type)\b
+      scope: keyword.control.zig
+    - match: \b(struct)\b
+      scope: keyword.type.struct.zig
+    - match: \b(union)\b
+      scope: keyword.type.union.zig
+    - match: \b(enum)\b
+      scope: keyword.type.enum.zig
+    - match: \b(fn|test)\b
+      scope: storage.type.function.zig
+    - match: ({{identifier}})\s*\(
+      captures:
+        "1": variable.function.zig
+    - match: (\.)({{identifier}})\b\s*(?!(\(|\.))
+      captures:
+        "1": punctuation.accessor.zig
+        "2": variable.other.member.zig
+    - match: \.\s*({{identifier}})\b
+      captures:
+        "1": source.zig
+    - match: \b({{identifier}})\s*(:)\s*\{
+      captures:
+        "1": variable.other.zig
+    - match: (@{{identifier}})
+      scope: support.function.zig
+
+  function-call:
+    - match: \b(fn)\s+({{identifier}})\s*\(
+      captures:
+        "1": storage.type.function.zig
+        "2": entity.name.function.zig
+
+  constants:
+    - match: \b(true|false|null)\b
+      scope: constant.language.zig
+
+  operators:
+    - match: (%(\+|-|\*\/)=)|->|&&
+      scope: invalid.zig
+    - match: (\*|\+|-|/|%|\?|!|:|\^|\||=>|=|=<|&|<|>|\.\.\.?|\|\||~)
+      scope: keyword.operator.zig
+
+  types:
+    - match: \b(usize|auto|isize|bool|comptime_int|comptime_float|anytype)\b
+      scope: storage.type.zig
+    - match: \b(u|i)[0-9]+\b
+      scope: storage.type.zig
+    - match: \b(f(16|32|64|128))\b
+      scope: storage.type.zig
+    - match: \b(c_int|c_uint|c_short|c_ushort|c_long|c_ulong)\b
+      scope: storage.type.zig
+    - match: \b(void|c_void)\b
+      scope: storage.type.zig
+    - match: \b(anyerror)\b
+      scope: storage.type.zig
+    - match: \b(anyframe)((->)(?=({{identifier}}))?)\b
+      captures:
+        "1": storage.type.zig
+        "3": keyword.operator.zig
+
+  strings:
+    - match: '"'
+      scope: punctuation.definition.string.begin.zig
+      push:
+        - meta_scope: string.quoted.double.zig
+        - match: '"'
+          scope: punctuation.definition.string.end.zig
+          pop: true
+        - include: string-escaped-char
+    - match: "'"
+      scope: punctuation.definition.string.begin.zig
+      push:
+        - meta_scope: string.quoted.raw.zig
+        - match: "'"
+          scope: punctuation.definition.string.end.zig
+          pop: true
+        - include: string-escaped-char
+
+    - match: \\\\
+      scope: punctuation.definition.string.begin.zig
+      push:
+        - meta_scope: string.quoted.triple.zig
+        - match: \n
+          pop: true
+
+  string-escaped-char:
+    - match: '\\(\\|[abefnrutv''"]|x\h{2}|u\h{4}|U\h{8}|[0-7]{3})'
+      scope: constant.character.escape.zig
+    - match: \\.
+      scope: invalid.illegal.unknown-escape.zig

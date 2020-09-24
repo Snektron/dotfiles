@@ -1,0 +1,14 @@
+<snippet>
+    <content><![CDATA[
+#ifndef ${1:${TM_FILEPATH/(\/([^\/\.]*)(?!.*(?:include|src))|.*?([^\/]*)\/(?:include|src)|.*\.(.*))/\U_$2$3$4/g}}
+#define ${1}
+
+${0:$SELECTION}
+
+#endif
+
+]]></content>
+    <tabTrigger>guard</tabTrigger>
+    <scope>source.c++</scope>
+    <description>Generate header guard</description>
+</snippet>
