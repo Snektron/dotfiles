@@ -1,0 +1,126 @@
+%YAML 1.2
+---
+name: Futhark
+file_extensions: [fut]
+scope: source.futhark
+
+variables:
+  name: '[A-Za-z_][A-Za-z_0-9]*'
+  identifier: '(?:{{name}}\.)?{{name}}'
+  numeric: '[0-9]+'
+  decimal: '{{numeric}}\.{{numeric}}'
+  scientific: '({{decimal}}|{{numeric}})e-?{{numeric}}'
+  builtin_types: 'bool|f32|f64|i16|i32|i64|i8|int|real|u16|u32|u64|u8'
+  array_type: '\*?(?:\[[\w\d]*\])*'
+  nat_type: '{{array_type}}(?:{{builtin_types}}|{{identifier}})'
+  tuple: '\({{nat_type}}(?:,\s*{{nat_type}})+\)'
+  type: '{{tuple}}|{{nat_type}}'
+  type_annotation: '\s*:\s*({{type}})'
+  typed_arg: '({{identifier}}){{type_annotation}}'
+  shape_args: ((\[[\w]+\])*)
+
+contexts:
+  main:
+    # Comments
+    - match: '--.*'
+      scope: comment.line.futhark
+    
+    # Literal constants
+    - match: 'True|False'
+      scope: constant.language.futhark
+    
+    # Literal numbers
+    - match: '\b-?{{scientific}}|{{decimal}}|{{numeric}}(?:{{builtin_types}})\b'
+      scope: constant.numeric
+    
+    # Types
+    - match: '{{array_type}}{{builtin_types}}'
+      scope: storage.type.futhark
+    
+    # Keywords and operators
+    - match: '\b(default|do|else|empty|for|if|in|import|include|loop|module|not|op|struct|then|unsafe|while|with)\b'
+      scope: keyword.futhark
+
+    # Operators
+    - match: '\+|-|\*|/|//|%|%%|==|\!=|<|<=|\*\*|\^|&|\||>>|<<|>>>|->'
+      scope: keyword.operator.arithmetic.futhark
+
+    # Binding
+    - match: '='
+      scope: keyword.operator.assignment.futhark
+
+    # known builtin functions
+    - match: '\b(concat|copy|empty|filter|iota|map|map2|map3|partition|pow|redomap|reduce|reduceComm|replicate|reshape|rotate|scan|shape|size|split|transpose|unzip|write|zip|zipWith)\b'
+      scope: support.function.builtin.futhark
+
+    # Type declaration
+    - match: '(type)\s*({{identifier}}) = ({{type}})'
+      captures:
+        1: keyword.futhark
+        2: storage.type.futhark
+        3: storage.type.futhark
+
+    # Let bindings
+    - match: '(let)\s+({{identifier}})\s*(=)\s*'
+      captures:
+        1: keyword.futhark
+        2: variable.futhark
+        3: keyword.operator.assignment.futhark
+
+    # Function declaration start (both regular and entry points)
+    - match: '(let|entry)\s+({{identifier}})\s*({{shape_args}})\s*\('
+      captures:
+        1: keyword.futhark
+        2: entity.name.function.futhark
+        3: storage.type.template
+      push: funcargs
+
+    # Lambda ala Haskell (\x -> expr)
+    - match: '(\\)\s*'
+      captures:
+        1: keyword.operator.assignment.futhark
+      push: lambdaargs
+    
+    # Everything else is considered as a variable
+    - match: '\b{{identifier}}\b'
+      scope: variable
+
+  
+  # Function arguments
+  args:
+    # First arg
+    - match: '{{typed_arg}}'
+      captures:
+          1: variable.parameter.futhark
+          2: storage.type.futhark
+
+    # nth arg
+    - match: '(\)\s*\(\s*|,\s*){{typed_arg}}'
+      captures:
+          2: variable.parameter.futhark
+          3: storage.type.futhark
+  
+  # Anonymous functions
+  lambdaargs:
+    - include: args
+
+    # Untyped args
+    - match: '{{identifier}}'
+      scope: variable.parameter.futhark
+
+    # Exit to lambda body
+    - match: '\s*(->)'
+      captures:
+        1: keyword.operator.assignment.futhark
+      pop: true
+
+  # Function definition
+  funcargs:
+    - include: args
+
+    # Return type and function body
+    - match: '\)(?:{{type_annotation}})?\s*(=)'
+      captures:
+          1: storage.type.futhark
+          2: keyword.operator.assignment.futhark
+      pop: true
