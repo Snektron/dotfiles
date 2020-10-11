@@ -8,7 +8,7 @@ scope: source.zig
 variables:
   keywords: |
     (?x) \b(
-      align|allowzero|and|anyframe|anytype|asm|async|await|break|callconv|catch|comptime|const|continue|defer|else|enum|errdefer|error|export|extern|false|fn|for|if|inline|noalias|noinline|nosuspend|null|or|orelse|packed|pub|resume|return|linksection|struct|suspend|switch|test|threadlocal|true|try|undefined|union|unreachable|usingnamespace|var|volatile|while
+      align|allowzero|and|anyframe|anytype|asm|async|await|break|callconv|catch|comptime|const|continue|defer|else|enum|errdefer|error|export|extern|false|fn|for|if|inline|noalias|noinline|nosuspend|null|or|opaque|orelse|packed|pub|resume|return|linksection|struct|suspend|switch|test|threadlocal|true|try|undefined|union|unreachable|usingnamespace|var|volatile|while
     )\b
   identifier: '\b[[:alpha:]_][[:alnum:]_]*\b'
 
@@ -78,6 +78,8 @@ contexts:
       scope: keyword.control.zig
     - match: \b(struct)\b
       scope: keyword.type.struct.zig
+    - match: \b(opaque)\b
+      scope: keyword.type.opaque.zig
     - match: \b(union)\b
       scope: keyword.type.union.zig
     - match: \b(enum)\b
