@@ -2,7 +2,7 @@ set $mod Mod4
 
 exec --no-startup-id "killall picom; picom -b --backend glx --vsync"
 exec --no-startup-id "setxkbmap -option compose:rctrl"
-exec --no-startup-id "unclutter -idle 1 -grab"
+# exec --no-startup-id "unclutter -idle 1 -grab"
 
 font pango:Cantarell 10
 
