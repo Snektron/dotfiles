@@ -70,6 +70,8 @@ contexts:
       scope: storage.type.futhark
     - match: '{{float_type}}'
       scope: storage.type.futhark
+    - match: \b(bool)\b
+      scope: storage.type.futhark
 
   strings:
     - match: '"'
