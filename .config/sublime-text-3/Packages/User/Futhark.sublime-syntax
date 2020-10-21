@@ -10,12 +10,12 @@ variables:
   int_type: '[iuf](?:8|16|32|64)'
   float_type: 'f(?:32|64)'
   number: '[0-9_]+'
-  opstartchar: '\+|-|\*|/|%|=|!|>|<|\|&|^'
-  opchar: '{{opstartchar}}|\.'
-  binop: '{{opstartchar}}{{opchar}}*'
-  type_param: "'{{name}}"
-  size_param: '\[{{name}}\]'
-  param: '{{type_param}}|{{size_param}}'
+  opstartchar: '(?:\+|-|\*|/|%|=|!|>|<|\|&|\^)'
+  opchar: '(?:{{opstartchar}}|\.)'
+  binop: '(?:{{opstartchar}}{{opchar}}*)'
+  type_param: "(?:'{{name}})"
+  size_param: '(?:\[{{name}}\])'
+  param: '(?:{{type_param}}|{{size_param}})'
 #   identifier: '(?:{{name}}\.)?{{name}}'
 #   numeric: '[0-9]+'
 #   decimal: '{{numeric}}\.{{numeric}}'
@@ -98,7 +98,7 @@ contexts:
       scope: invalid.illegal.unknown-escape.futhark
 
   operators:
-    - match: (\.|,|\+\+|:>|:|\|\|&&|<=|>=|>|<|==|!=|&|^|\||<<|>>|\+|-|\*|%|//|%%|\|>|<\|->|~|\\|=)
+    - match: (\.|,|\+\+|:>|:|\|\|&&|<=|>=|>|<|==|!=|&|\^|\||<<|>>|\+|-|\*|%|/|//|%%|\|>|<\|->|~|\\|=)
       scope: keyword.operator.futhark
 
   constants:
@@ -119,7 +119,7 @@ contexts:
       scope: keyword.declaration.futhark
     - match: \b(type)\b
       scope: storage.type.futhark
-    - match: \b(if|then|else|loop|unsafe|assert|with|match|case|for|while)\b
+    - match: \b(if|then|else|loop|unsafe|assert|with|match|case|for|while|do)\b
       scope: keyword.control.futhark
 
   builtins:
