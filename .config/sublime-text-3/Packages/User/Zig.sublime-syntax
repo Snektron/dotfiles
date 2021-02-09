@@ -8,7 +8,7 @@ scope: source.zig
 variables:
   keywords: |
     (?x) \b(
-      align|allowzero|and|anyframe|anytype|asm|async|await|break|callconv|catch|comptime|const|continue|defer|else|enum|errdefer|error|export|extern|false|fn|for|if|inline|noalias|noinline|nosuspend|null|or|opaque|orelse|packed|pub|resume|return|linksection|struct|suspend|switch|test|threadlocal|true|try|undefined|union|unreachable|usingnamespace|var|volatile|while
+      align|allowzero|and|anyframe|anytype|asm|async|await|break|callconv|catch|comptime|const|continue|defer|else|enum|errdefer|error|export|extern|false|fn|for|if|inline|noalias|noinline|noreturn|nosuspend|null|or|opaque|orelse|packed|pub|resume|return|linksection|struct|suspend|switch|test|threadlocal|true|try|undefined|union|unreachable|usingnamespace|var|volatile|while
     )\b
   identifier: '\b[[:alpha:]_][[:alnum:]_]*\b'
 
@@ -119,7 +119,7 @@ contexts:
       scope: keyword.operator.zig
 
   types:
-    - match: \b(usize|auto|isize|bool|comptime_int|comptime_float|anytype)\b
+    - match: \b(usize|auto|isize|bool|comptime_int|comptime_float|anytype|noreturn)\b
       scope: storage.type.zig
     - match: \b(u|i)[0-9]+\b
       scope: storage.type.zig

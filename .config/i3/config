@@ -2,6 +2,7 @@ set $mod Mod4
 
 exec --no-startup-id "killall picom; picom -b --backend glx --vsync"
 exec --no-startup-id "setxkbmap -option compose:rctrl"
+# exec --no-startup-id "pipewire"
 # exec --no-startup-id "unclutter -idle 1 -grab"
 
 font pango:Cantarell 10
@@ -25,7 +26,7 @@ font pango:Cantarell 10
 # bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status
 
 bindsym XF86AudioRaiseVolume exec --no-startup-id "amixer set Master 5%+"
-bindsym XF86AudioLowerVolume exec --no-startup-id "amixer set Master 5%-" 
+bindsym XF86AudioLowerVolume exec --no-startup-id "amixer set Master 5%-"
 bindsym XF86AudioMute exec --no-startup-id "amixer set Master toggle"
 
 bindsym Print exec --no-startup-id "/home/robin/.local/bin/screenshot"
