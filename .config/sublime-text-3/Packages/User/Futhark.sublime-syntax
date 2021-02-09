@@ -6,40 +6,40 @@ file_extensions:
 scope: source.futhark
 
 variables:
-  name: "[A-Za-z][A-Za-z_0-9']*"
+  id: '[a-zA-Z_][a-zA-Z0-9_'']*'
   int_type: '[iuf](?:8|16|32|64)'
   float_type: 'f(?:32|64)'
-  number: '[0-9_]+'
+  exponent: '[-+]??(_?){{dec_integer}}'
+  dec_exponent: (?:[Ee]{{exponent}})
+  hex_exponent: (?:[Pp]{{exponent}})
   opstartchar: '(?:\+|-|\*|/|%|=|!|>|<|\|&|\^)'
-  opchar: '(?:{{opstartchar}}|\.)'
-  binop: '(?:{{opstartchar}}{{opchar}}*)'
-  type_param: "(?:'{{name}})"
-  size_param: '(?:\[{{name}}\])'
-  param: '(?:{{type_param}}|{{size_param}})'
-#   identifier: '(?:{{name}}\.)?{{name}}'
-#   numeric: '[0-9]+'
-#   decimal: '{{numeric}}\.{{numeric}}'
-#   scientific: '({{decimal}}|{{numeric}})e-?{{numeric}}'
-#   builtin_types: 'bool|f32|f64|i16|i32|i64|i8|int|real|u16|u32|u64|u8'
-#   array_type: '\*?(?:\[[\w\d]*\])*'
-#   nat_type: '{{array_type}}(?:{{builtin_types}}|{{identifier}})'
-#   tuple: '\({{nat_type}}(?:,\s*{{nat_type}})+\)'
-#   type: '{{tuple}}|{{nat_type}}'
-#   type_annotation: '\s*:\s*({{type}})'
-#   typed_arg: '({{identifier}}){{type_annotation}}'
-#   shape_args: ((\[[\w]+\])*)
+  opchar: (?:{{opstartchar}}|\.)
+  binop: (?:{{opstartchar}}{{opchar}}*)
+  type_param: (?:\[\s*(?:{{id}})\s*\]|'\s*{{id}})
 
 contexts:
   main:
+    - include: bindings
     - include: comments
     - include: types
     - include: numbers
     - include: strings
     - include: operators
     - include: constants
-    - include: bindings
     - include: keywords
     - include: builtins
+
+  bindings:
+    - match: '\b(let|entry)\s+({{id}}|\(\s*{{binop}}\s*\))'
+      captures:
+        1: keyword.other.futhark
+        2: variable.futhark
+      push:
+        - meta_scope: meta.function.parameters.futhark
+        - match: '({{type_param}})'
+          scope: storage.type.futhark
+        - match: '(?==|\(|\{|:)'
+          pop: true
 
   comments:
     - match: --
@@ -48,6 +48,14 @@ contexts:
         - meta_scope: comment.line.double-dash.futhark
         - match: \n
           pop: true
+
+  types:
+    - match: '{{int_type}}'
+      scope: storage.type.futhark
+    - match: '{{float_type}}'
+      scope: storage.type.futhark
+    - match: \b(bool)\b
+      scope: storage.type.futhark
 
   numbers:
     - match: \b((?:0x[0-9a-fA-F_]+)(?:\.[0-9a-fA-F_]+(?:[Pp](?:\+|-)[0-9]+)?)?)({{int_type}}|{{float_type}})?\b
@@ -65,14 +73,6 @@ contexts:
         "1": constant.numeric.futhark
         "2": storage.type.futhark
 
-  types:
-    - match: '{{int_type}}'
-      scope: storage.type.futhark
-    - match: '{{float_type}}'
-      scope: storage.type.futhark
-    - match: \b(bool)\b
-      scope: storage.type.futhark
-
   strings:
     - match: '"'
       scope: punctuation.definition.string.begin.futhark
@@ -82,7 +82,7 @@ contexts:
           scope: punctuation.definition.string.end.futhark
           pop: true
         - include: string-escaped-char
-    - match: "'"
+    - match: "(?<![a-zA-Z0-9_])'"
       scope: punctuation.definition.string.begin.futhark
       push:
         - meta_scope: string.quoted.raw.futhark
@@ -104,13 +104,6 @@ contexts:
   constants:
     - match: \b(true|false)\b
       scope: constant.language.futhark
-
-  bindings:
-    - match: \b(let|entry)\s+({{name}}|\(\s*{{binop}}\s*\))(?:\s+({{param}}))*\b
-      captures:
-        "1": keyword.control.futhark
-        "2": variable.futhark
-        "3": storage.type.futhark
 
   keywords:
     - match: \b(open|import|local|module|val|include)\b
@@ -135,109 +128,3 @@ contexts:
       scope: support.function.builtin.futhark
     - match: \b((un)?zip[2-5]?)\b
       scope: support.function.builtin.futhark
-
-# contexts:
-#   main:
-#     # Comments
-#     - match: '--.*'
-#       scope: comment.line.futhark
-
-#     # Literal constants
-#     - match: 'True|False'
-#       scope: constant.language.futhark
-
-#     # Literal numbers
-#     - match: '\b-?{{scientific}}|{{decimal}}|{{numeric}}(?:{{builtin_types}})\b'
-#       scope: constant.numeric
-
-#     # Types
-#     - match: '{{array_type}}{{builtin_types}}'
-#       scope: storage.type.futhark
-
-#     # Keywords and operators
-#     - match: '\b(default|do|else|empty|for|if|in|import|include|loop|module|not|op|struct|then|unsafe|while|with)\b'
-#       scope: keyword.futhark
-
-#     # Operators
-#     - match: '\+|-|\*|/|//|%|%%|==|\!=|<|<=|\*\*|\^|&|\||>>|<<|>>>|->'
-#       scope: keyword.operator.arithmetic.futhark
-
-#     # Binding
-#     - match: '='
-#       scope: keyword.operator.assignment.futhark
-
-#     # known builtin functions
-#     - match: '\b(concat|copy|empty|filter|iota|map|map2|map3|partition|pow|redomap|reduce|reduceComm|replicate|reshape|rotate|scan|shape|size|split|transpose|unzip|write|zip|zipWith|scatter|iterate_until|iterate_while|iterate|tabulate|map_stream|map|stream_per|reduce_stream|reduce_stream_per|indices)\b'
-#       scope: support.function.builtin.futhark
-
-#     # Type declaration
-#     - match: '(type)\s*({{identifier}}) = ({{type}})'
-#       captures:
-#         1: keyword.futhark
-#         2: storage.type.futhark
-#         3: storage.type.futhark
-
-#     # Let bindings
-#     - match: '(let)\s+({{identifier}})\s*(=)\s*'
-#       captures:
-#         1: keyword.futhark
-#         2: variable.futhark
-#         3: keyword.operator.assignment.futhark
-
-#     # Function declaration start (both regular and entry points)
-#     - match: '(let|entry)\s+({{identifier}})\s*({{shape_args}})\s*\('
-#       captures:
-#         1: keyword.futhark
-#         2: entity.name.function.futhark
-#         3: storage.type.template
-#       push: funcargs
-
-#     # Lambda ala Haskell (\x -> expr)
-#     - match: '(\\)\s*'
-#       captures:
-#         1: keyword.operator.assignment.futhark
-#       push: lambdaargs
-
-#     # Everything else is considered as a variable
-#     - match: '\b{{identifier}}\b'
-#       scope: variable
-
-
-#   # Function arguments
-#   args:
-#     # First arg
-#     - match: '{{typed_arg}}'
-#       captures:
-#           1: variable.parameter.futhark
-#           2: storage.type.futhark
-
-#     # nth arg
-#     - match: '(\)\s*\(\s*|,\s*){{typed_arg}}'
-#       captures:
-#           2: variable.parameter.futhark
-#           3: storage.type.futhark
-
-#   # Anonymous functions
-#   lambdaargs:
-#     - include: args
-
-#     # Untyped args
-#     - match: '{{identifier}}'
-#       scope: variable.parameter.futhark
-
-#     # Exit to lambda body
-#     - match: '\s*(->)'
-#       captures:
-#         1: keyword.operator.assignment.futhark
-#       pop: true
-
-#   # Function definition
-#   funcargs:
-#     - include: args
-
-#     # Return type and function body
-#     - match: '\)(?:{{type_annotation}})?\s*(=)'
-#       captures:
-#           1: storage.type.futhark
-#           2: keyword.operator.assignment.futhark
-#       pop: true
