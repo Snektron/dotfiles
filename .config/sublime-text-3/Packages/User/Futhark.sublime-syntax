@@ -30,7 +30,7 @@ contexts:
     - include: builtins
 
   bindings:
-    - match: '\b(let|entry)\s+({{id}}|\(\s*{{binop}}\s*\))'
+    - match: '\b(let|entry|val)\s+({{id}}|\(\s*{{binop}}\s*\))'
       captures:
         1: keyword.other.futhark
         2: variable.futhark
