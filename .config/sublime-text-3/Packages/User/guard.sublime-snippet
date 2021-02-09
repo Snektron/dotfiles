@@ -1,6 +1,6 @@
 <snippet>
     <content><![CDATA[
-#ifndef ${1:${TM_FILEPATH/(\/([^\/\.]*)(?!.*(?:include|src))|.*?([^\/]*)\/(?:include|src)|.*\.(.*))/\U_$2$3$4/g}}
+#ifndef ${1:${TM_FILEPATH/(?:^.*\/(\w+)\/(?:src|include)\/(?:\1\/)?)|(\w+)|\/|\./\U(?1_\1)(?2_\2)/g}}
 #define ${1}
 
 ${0:$SELECTION}
