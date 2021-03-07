@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+import sys
+import argparse
+import os
+import re
+
+extensions = ['.hpp', '.h']
+dirs = ['include', 'src']
+
+regex = re.compile(r'(?:^.*\/(\w+)\/(?:src|include)\/(?:\1\/)?)|(\w+)|\/|\.')
+
+parser = argparse.ArgumentParser(description='Fix header guards')
+parser.add_argument('root', metavar='<dir>', type=str, help='Project root directory')
+parser.add_argument('-c', help='Only print which files are not deemed to have correct headers, but don\'t replace', action='store_true')
+parser.add_argument('-v', help='Verbose logging', action='store_true')
+
+args = parser.parse_args()
+root = os.path.abspath(args.root)
+projectname = os.path.basename(root)
+
+def header_guard(filename):
+    matches = [part.upper() for part in regex.split(filename) if part is not None and part != '']
+    return '_' + '_'.join(matches)
+
+def check_and_fix(root, name):
+    filename = os.path.join(root, name)
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+
+    guard = header_guard(filename)
+
+    # Check if the file has existing header guards at all
+    has_guards = len(lines) >= 2 and lines[0].startswith('#ifndef') and lines[1].startswith('#define')
+    if args.v:
+        if not has_guards:
+            print(f'{name}: has existing guards')
+        else:
+            print(f'{name}: has no existing guards')
+
+    generate_headers = not has_guards
+    if has_guards:
+        generate_headers = lines[0] != f'#ifndef {guard}\n' or lines[1] != f'#define {guard}\n'
+        if args.v and generate_headers:
+            print(f'{name}: has incorrect guards')
+
+    if not generate_headers:
+        return
+
+    print(f'{filename}')
+
+    if args.c:
+        return
+
+    if has_guards:
+        lines[0] = f'#ifndef {guard}\n'
+        lines[1] = f'#define {guard}\n'
+    else:
+        # Assume that there is also no endif
+        lines = [f'#ifndef {guard}\n', f'#define {guard}\n', '\n'] + lines + ['\n', '#endif\n']
+
+    with open(filename, 'w') as f:
+        f.write(''.join(lines))
+
+for d in dirs:
+    for root, dirs, files in os.walk(os.path.join(root, d)):
+        for name in files:
+            filename = os.path.join(root, name)
+            ext = os.path.splitext(name)[1]
+            if ext in extensions:
+                check_and_fix(root, name)
