@@ -30,16 +30,28 @@ contexts:
     - include: builtins
 
   bindings:
-    - match: '\b(let|entry|val)\s+({{id}}|\(\s*{{binop}}\s*\))'
+    - match: '\b(let|entry)\s+({{id}}|\(\s*{{binop}}\s*\))'
       captures:
         1: keyword.other.futhark
         2: variable.futhark
-      push:
-        - meta_scope: meta.function.parameters.futhark
-        - match: '({{type_param}})'
-          scope: storage.type.futhark
-        - match: '(?==|\(|\{|:)'
-          pop: true
+      push: type_params
+    - match: '\b(val)\s+({{id}})'
+      captures:
+        1: keyword.other.futhark
+        2: variable.futhark
+      push: type_params
+    - match: '\b(type)[~^]?\s+({{id}})'
+      captures:
+        1: keyword.other.futhark
+        2: variable.futhark
+      push: type_params
+
+  type_params:
+    - meta_scope: meta.function.parameters.futhark
+    - match: '({{type_param}})'
+      scope: storage.type.futhark
+    - match: (?!'|\[|\s)
+      pop: true
 
   comments:
     - match: --
@@ -50,9 +62,9 @@ contexts:
           pop: true
 
   types:
-    - match: '{{int_type}}'
+    - match: '\b({{int_type}})\b'
       scope: storage.type.futhark
-    - match: '{{float_type}}'
+    - match: '\b({{float_type}})\b'
       scope: storage.type.futhark
     - match: \b(bool)\b
       scope: storage.type.futhark
@@ -98,7 +110,7 @@ contexts:
       scope: invalid.illegal.unknown-escape.futhark
 
   operators:
-    - match: (\.|,|\+\+|:>|:|\|\|&&|<=|>=|>|<|==|!=|&|\^|\||<<|>>|\+|-|\*|%|/|//|%%|\|>|<\|->|~|\\|=)
+    - match: (\.|,|\+\+|:>|:|\|\|&&|<=|>=|>|<|==|!=|&|\^|\||<<|>>|\+|-|\*|%|/|//|%%|\|>|<\|->|~|\\|=|!)
       scope: keyword.operator.futhark
 
   constants:
@@ -116,15 +128,15 @@ contexts:
       scope: keyword.control.futhark
 
   builtins:
-    - match: \b(length|null|head|last|tail|init|take|drop|split|reverse|concat|concat_to|rotate|iota|indices|replicate|copy|flatten(_to)?|flatten_[34]d|unflatten|unflatten_[34]d|transpose|and|or|fold[lr]|tabulate|tabulate_[23]d)\b
+    - match: (?<!#)\b(length|null|head|last|tail|init|take|drop|split|reverse|concat|concat_to|rotate|iota|indices|replicate|copy|flatten(_to)?|flatten_[34]d|unflatten|unflatten_[34]d|transpose|and|or|fold[lr]|tabulate|tabulate_[23]d)\b
       scope: support.function.builtin.futhark
-    - match: \b(flip|curry|uncurry|const|id|iterate|iterate_until|iterate_while)\b
+    - match: (?<!#)\b(flip|curry|uncurry|const|id|iterate|iterate_until|iterate_while)\b
       scope: support.function.builtin.futhark
-    - match: \b(to_i64|negate|max|min|abs|sgn|highest|lowest|sum|product|maximum|minimum|num_bits|get_bit|set_bit|popc|mul_hi|mad_hi|clz|ctz|from_fraction|to_i64|to_f64|sqrt|exp|a?sinh?|a?cosh?|a?tanh?|atan2|l?gamma|lerp|log|log10|log2|ceil|floor|trunc|mad|fma|round|isinf|isnan|inf|nan|pi|e|from_bits|to_bits)\b
+    - match: (?<!#)\b(to_i64|negate|max|min|abs|sgn|highest|lowest|sum|product|maximum|minimum|num_bits|get_bit|set_bit|popc|mul_hi|mad_hi|clz|ctz|from_fraction|to_i64|to_f64|sqrt|exp|a?sinh?|a?cosh?|a?tanh?|atan2|l?gamma|lerp|log|log10|log2|ceil|floor|trunc|mad|fma|round|isinf|isnan|inf|nan|pi|e|from_bits|to_bits)\b
       scope: support.function.builtin.futhark
-    - match: \b([rt](32|64)|opaque|trace|break)\b
+    - match: (?<!#)\b([rt](32|64)|opaque|trace|break)\b
       scope: support.function.builtin.futhark
-    - match: \b(map[2-5]?|reduce|reduce_comm|reduce_by_index|scan|filter|partition2?|(reduce|map)_stream(_per)?|all|any|scatter)\b
+    - match: (?<!#)\b(map[2-5]?|reduce|reduce_comm|reduce_by_index|scan|filter|partition2?|(reduce|map)_stream(_per)?|all|any|scatter)\b
       scope: support.function.builtin.futhark
-    - match: \b((un)?zip[2-5]?)\b
+    - match: (?<!#)\b((un)?zip[2-5]?)\b
       scope: support.function.builtin.futhark
