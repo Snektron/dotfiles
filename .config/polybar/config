@@ -40,7 +40,7 @@ tray-scale = 1.0
 
 [bar/secondary]
 inherit = bar/base
-monitor = HDMI-1
+monitor = DP-2
 
 modules-left = i3
 
