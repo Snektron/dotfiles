@@ -13,4 +13,7 @@ function clip
 end
 
 config config status.showUntrackedFiles no
-tabs -4
+
+if status is-interactive
+    tabs -4
+end
