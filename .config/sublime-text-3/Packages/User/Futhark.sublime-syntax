@@ -114,17 +114,17 @@ contexts:
       scope: keyword.operator.futhark
 
   constants:
-    - match: \b(true|false)\b
+    - match: (?<!#)\b(true|false)\b
       scope: constant.language.futhark
 
   keywords:
-    - match: \b(open|import|local|module|val|include)\b
+    - match: (?<!#)\b(open|import|local|module|val|include)\b
       scope: keyword.control.import.futhark
-    - match: \b(let|entry|in)\b
+    - match: (?<!#)\b(let|entry|in)\b
       scope: keyword.declaration.futhark
-    - match: \b(type)\b
+    - match: (?<!#)\b(type)\b
       scope: storage.type.futhark
-    - match: \b(if|then|else|loop|unsafe|assert|with|match|case|for|while|do)\b
+    - match: (?<!#)\b(if|then|else|loop|unsafe|assert|with|match|case|for|while|do)\b
       scope: keyword.control.futhark
 
   builtins:
