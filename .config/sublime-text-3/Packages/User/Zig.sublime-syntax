@@ -6,26 +6,41 @@ file_extensions:
 first_line_match: "-[*]-( Mode:)? zig -[*]-"
 scope: source.zig
 variables:
-  keywords: |
-    (?x) \b(
-      align|allowzero|and|anyframe|anytype|asm|async|await|break|callconv|catch|comptime|const|continue|defer|else|enum|errdefer|error|export|extern|false|fn|for|if|inline|noalias|noinline|noreturn|nosuspend|null|or|opaque|orelse|packed|pub|resume|return|linksection|struct|suspend|switch|test|threadlocal|true|try|undefined|union|unreachable|usingnamespace|var|volatile|while
-    )\b
   identifier: '\b[[:alpha:]_][[:alnum:]_]*\b'
+  mods: '\b(?:export|extern|inline|noinline|threadlocal)\b'
 
 contexts:
   main:
-    - include: global
+    - include: statements
 
-  global:
+  statements:
     - include: comments
-    - include: function-call
-    - include: types
+    - include: block-keywords
+    - include: braces
+    - include: continue-break
+    - include: func-decl
+    - include: bindings
+    - include: parens
+    - include: expr-stats
+    - include: defer
+    - include: builtins
+    - include: assignment
+    - include: switch
+    - include: expression
+
+  expression:
+    - include: operators
+    - include: keyword-operators
+    - include: braces
+    - include: parens
+    - include: strings
     - include: numbers
     - include: constants
-    - include: keywords
-    - include: operators
-    - include: strings
-    - include: string-escaped-char
+    - include: accessor-enum-literal
+    - include: modifiers
+    - include: primitives
+    - include: builtins
+    - include: switch
 
   comments:
     - match: //
@@ -34,91 +49,109 @@ contexts:
         - meta_scope: comment.line.double-slash.zig
         - match: \n
           pop: true
-    - match: "#!"
-      scope: punctuation.definition.comment.zig
-      push:
-        - meta_scope: comment.line.double-slash.zig
-        - match: \n
-          pop: true
 
-  numbers:
-    - match: \b([0-9_]+)(\.([0-9]+))?([Ee](\+|-)?[0-9]+)?\b
-      scope: constant.numeric.zig
-    - match: \b(0x[0-9a-fA-F_]+)\b
-      scope: constant.numeric.zig
-    - match: \b(0b[01_]+)\b
-      scope: constant.numeric.zig
+  block-keywords:
+    - match: \b(if|else|while|for|switch)\b
+      scope: keyword.control.zig
 
-  keywords:
-    - match: \b(error)\.({{identifier}})\b
+  braces:
+    - match: ({{identifier}})\s*(:)\s*(\{)
       captures:
-        "1": storage.type.zig
-        "3": entity.name.variable.zig
-    - match: \b(asm|volatile)\b
-      scope: keyword.control.zig
-    - match: \b(continue|switch|for|while)\b
-      scope: keyword.control.zig
-    - match: \b(break)\b(\s+:({{identifier}}))?
-      captures:
-        "1": keyword.control.zig
-        "3": variable.other.zig
-    - match: \b(var|const|packed|extern|export|pub|inline|noinline|align|callconv|noalias)\b
-      scope: storage.modifier.zig
-    - match: \b(defer|errdefer|usingnamespace)\b
-      scope: keyword.control.zig
-    - match: \b(async|await|cancel|suspend|resume)\b
-      scope: keyword.control.zig
-    - match: \b(try|catch|orelse|unreachable|error|if|else|return)\b
-      scope: keyword.control.zig
-    - match: \b(and|or)\b
-      scope: keyword.control.zig
-    - match: \b(undefined|comptime)\b
-      scope: keyword.control.zig
-    - match: \b(type)\b
-      scope: keyword.control.zig
-    - match: \b(struct)\b
-      scope: keyword.type.struct.zig
-    - match: \b(opaque)\b
-      scope: keyword.type.opaque.zig
-    - match: \b(union)\b
-      scope: keyword.type.union.zig
-    - match: \b(enum)\b
-      scope: keyword.type.enum.zig
-    - match: \b(fn|test)\b
-      scope: storage.type.function.zig
-    - match: ({{identifier}})\s*\(
-      captures:
-        "1": variable.function.zig
-    - match: (\.)({{identifier}})\b\s*(?!(\(|\.))
-      captures:
-        "1": punctuation.accessor.zig
-        "2": variable.other.member.zig
-    - match: \.\s*({{identifier}})\b
-      captures:
-        "1": source.zig
-    - match: \b({{identifier}})\s*(:)\s*\{
-      captures:
-        "1": variable.other.zig
-    - match: (@{{identifier}})
-      scope: support.function.zig
+        1: entity.name.label.zig
+        2: keyword.operator.zig
+        3: punctuation.section.braces.begin.zig
+    - match: \{
+      scope: punctuation.section.braces.begin.zig
+      push: pop-braces
+    - match: \}
+      scope: punctuation.section.braces.end.zig
 
-  function-call:
-    - match: \b(fn)\s+({{identifier}})\s*\(
-      captures:
-        "1": storage.type.function.zig
-        "2": entity.name.function.zig
+  pop-braces:
+    - match: \}
+      scope: punction.section.braces.end.zig
+      pop: true
+    - include: statements
 
-  constants:
-    - match: \b(true|false|null)\b
-      scope: constant.language.zig
+  continue-break:
+    - match: \b(continue|break)\s*(?:(:)\s*({{identifier}}))?\b
+      captures:
+        1: keyword.control.zig
+        2: keyword.operator.zig
+        3: variable.other.label.zig #TODO: Better scope for break targets?
+      push: pop-expression
+
+  func-decl:
+    # TODO: Can public functions be separated out more easily?
+    - match: \b(pub)\s+(?:({{mods}})\s+)*(fn)\s+({{identifier}})\b
+      captures:
+        1: storage.modifier.zig
+        2: storage.modifier.zig
+        3: keyword.declaration.function.zig
+        4: entity.name.function.zig
+      push: func-args
+    - match: \b(?:({{mods}})\s+)?(fn)\s+({{identifier}})\b
+      captures:
+        1: storage.modifier.zig
+        2: keyword.declaration.function.zig
+        3: entity.name.function.zig
+      push: func-args
+
+  func-args:
+    - include: parens
+    - match: (?=;)
+      pop: true
+    - match: (?=\{)
+      pop: true
+    - include: expression
+
+  bindings:
+    # TODO: Can public bindings be separated out more easily?
+    - match: \b(pub)\s+(?:({{mods}})\s+)?(const|var)\s+({{identifier}})\b
+      captures:
+        1: storage.modifier.zig
+        2: storage.modifier.zig
+        3: storage.modifier.zig
+        4: meta.declaration.global.zig # TODO: Does this need an additional scope?`
+      push: pop-expression
+    - match: \b(?:(comptime)\s+)?(?:({{mods}})\s+)?(const|var)\s+({{identifier}})\b
+      captures:
+        1: storage.modifier.zig
+        2: storage.modifier.zig
+        3: storage.modifier.zig
+        4: meta.declaration.local.zig
+      push: pop-expression
+    - match: ({{identifier}})\s*(:)
+      captures:
+        1: variable.other.member
+        2: keyword.operator.zig
+      push: pop-expression
+
+  # pop-binding-body:
+
+    # - match: '=(?!>)'
+    #   scope: keyword.operator.zig
+    #   set: pop-expression
+    # - include: expression
 
   operators:
     - match: (%(\+|-|\*\/)=)|->|&&
       scope: invalid.zig
-    - match: (\*|\+|-|/|%|\?|!|:|\^|\||=>|=|=<|&|<|>|\.\.\.?|\|\||~)
+    - match: (\*|\+|-|/|%|\?|!|:|\^|\||=>|=|=<|&|<|>|\.\.\.?|\|\||~|,|\.(?=\{))
       scope: keyword.operator.zig
 
-  types:
+  keyword-operators:
+    - match: \b(and|or|async|await|try|catch|comptime|struct|enum|extern|packed)\b
+      scope: keyword.operator.zig
+    - match: \b(error)\.({{identifier}})\b
+      captures:
+        1: storage.type.zig
+        2: variable.other.readwrite
+
+  modifiers:
+    - match: \b(const|align|allowzero|callconv)\b #TODO: Account for ()?
+      scope: storage.modifier.zig
+
+  primitives:
     - match: \b(usize|auto|isize|bool|comptime_int|comptime_float|anytype|noreturn)\b
       scope: storage.type.zig
     - match: \b(u|i)[0-9]+\b
@@ -131,10 +164,53 @@ contexts:
       scope: storage.type.zig
     - match: \b(anyerror)\b
       scope: storage.type.zig
-    - match: \b(anyframe)((->)(?=({{identifier}}))?)\b
+    - match: \b(type)\b
+      scope: storage.type.zig
+    - match: \b(anyframe)(->)?\b
       captures:
-        "1": storage.type.zig
-        "3": keyword.operator.zig
+        1: storage.type.zig
+        2: keyword.operator.zig
+
+  parens:
+    - match: \(
+      scope: punctuation.section.parens.begin.zig
+      push:
+        - match: \)
+          scope: punction.section.parens.end.zig
+          pop: true
+        - include: expression
+    - match: \)
+      scope: punction.section.parens.end.zig
+
+  expr-stats:
+    - match: \b(comptime|try|await|return|usingnamespace)\b
+      scope: keyword.control.zig
+      push: pop-expression
+
+  # assignment:
+  #   - match: (\.)({{identifier}})\s*(?==)
+  #     captures:
+  #       1: punctuation.accessor.zig # TODO: Not sure if this is the right scope
+  #       2: variable.other.member.zig
+      # push: pop-expression-comma
+
+  defer:
+    - match: \b(defer|errdefer)\b\s*(?=\{)
+      scope: keyword.control.zig
+    - match: \b(defer|errdefer)\b
+      scope: keyword.control.zig
+      push: pop-expression
+
+  pop-expression:
+    - match: ;
+      scope: punctuation.terminator.zig
+      pop: true
+    - match: ','
+      scope: keyword.operator.zig
+      pop: true
+    - match: (?=\})
+      pop: true
+    - include: expression
 
   strings:
     - match: '"'
@@ -166,3 +242,25 @@ contexts:
       scope: constant.character.escape.zig
     - match: \\.
       scope: invalid.illegal.unknown-escape.zig
+
+  numbers:
+    - match: \b([0-9_]+)(\.([0-9]+))?([Ee](\+|-)?[0-9]+)?\b
+      scope: constant.numeric.zig
+    - match: \b(0x[0-9a-fA-F_]+)\b
+      scope: constant.numeric.zig
+    - match: \b(0b[01_]+)\b
+      scope: constant.numeric.zig
+
+  constants:
+    - match: \b(true|false|null|undefined)\b
+      scope: constant.language.zig
+
+  accessor-enum-literal:
+    - match: (\.)({{identifier}})\b\s*(?!(\(|\.))
+      captures:
+        1: punctuation.accessor.zig
+        2: variable.other.member.zig
+
+  builtins:
+  - match: (@{{identifier}})
+    scope: support.function.zig
