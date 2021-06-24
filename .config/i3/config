@@ -152,3 +152,5 @@ bindsym $mod+z move workspace to output right
 bar {
     i3bar_command $HOME/.config/polybar/launch.sh
 }
+
+default_border pixel

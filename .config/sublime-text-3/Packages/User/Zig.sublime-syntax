@@ -14,21 +14,18 @@ contexts:
     - include: statements
 
   statements:
-    - include: comments
-    - include: block-keywords
     - include: braces
     - include: continue-break
     - include: func-decl
     - include: bindings
-    - include: parens
     - include: expr-stats
     - include: defer
-    - include: builtins
     - include: assignment
-    - include: switch
     - include: expression
 
   expression:
+    - include: comments
+    - include: block-keywords
     - include: operators
     - include: keyword-operators
     - include: braces
@@ -40,7 +37,6 @@ contexts:
     - include: modifiers
     - include: primitives
     - include: builtins
-    - include: switch
 
   comments:
     - match: //
@@ -51,7 +47,7 @@ contexts:
           pop: true
 
   block-keywords:
-    - match: \b(if|else|while|for|switch)\b
+    - match: \b(if|else|while|for|switch|error|test)\b
       scope: keyword.control.zig
 
   braces:
@@ -60,6 +56,7 @@ contexts:
         1: entity.name.label.zig
         2: keyword.operator.zig
         3: punctuation.section.braces.begin.zig
+      push: pop-braces
     - match: \{
       scope: punctuation.section.braces.begin.zig
       push: pop-braces
@@ -122,30 +119,22 @@ contexts:
       push: pop-expression
     - match: ({{identifier}})\s*(:)
       captures:
-        1: variable.other.member
+        1: variable.other.member meta.declaration.local.zig
         2: keyword.operator.zig
       push: pop-expression
-
-  # pop-binding-body:
-
-    # - match: '=(?!>)'
-    #   scope: keyword.operator.zig
-    #   set: pop-expression
-    # - include: expression
 
   operators:
     - match: (%(\+|-|\*\/)=)|->|&&
       scope: invalid.zig
-    - match: (\*|\+|-|/|%|\?|!|:|\^|\||=>|=|=<|&|<|>|\.\.\.?|\|\||~|,|\.(?=\{))
+    - match: (\*|\+|-|/|%|\?|!|:|\^|\||=>|=|=<|&|<|>|\.\.\.?|\|\||~)
       scope: keyword.operator.zig
 
   keyword-operators:
-    - match: \b(and|or|async|await|try|catch|comptime|struct|enum|extern|packed)\b
+    - match: \b(and|or|async|await|try|catch|comptime|struct|enum|extern|packed|union|return|orelse|continue|break|unreachable)\b # TODO: Fix break here
       scope: keyword.operator.zig
     - match: \b(error)\.({{identifier}})\b
       captures:
         1: storage.type.zig
-        2: variable.other.readwrite
 
   modifiers:
     - match: \b(const|align|allowzero|callconv)\b #TODO: Account for ()?
@@ -183,8 +172,13 @@ contexts:
       scope: punction.section.parens.end.zig
 
   expr-stats:
-    - match: \b(comptime|try|await|return|usingnamespace)\b
+    - match: \b(try|await|return|unreachable)\b
       scope: keyword.control.zig
+      push: pop-expression
+    - match: \b(pub\s+)?(usingnamespace)\b
+      captures:
+        1: storage.modifier.zig
+        2: keyword.control.zig
       push: pop-expression
 
   # assignment:
@@ -206,7 +200,7 @@ contexts:
       scope: punctuation.terminator.zig
       pop: true
     - match: ','
-      scope: keyword.operator.zig
+      scope: punctuation.terminator.zig
       pop: true
     - match: (?=\})
       pop: true

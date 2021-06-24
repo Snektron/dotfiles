@@ -1,0 +1,105 @@
+#!/bin/sh
+
+# This is the example configuration file for river.
+#
+# If you wish to edit this, you will probably want to copy it to
+# $XDG_CONFIG_HOME/river/init or $HOME/.config/river/init first.
+#
+# See the river(1), riverctl(1), and rivertile(1) man pages for complete
+# documentation.
+
+# Use the "logo" key as the primary modifier
+mod="Mod4"
+
+riverctl map normal $mod Return spawn alacritty
+riverctl map normal $mod Q close
+riverctl map normal $mod+Shift E exit
+riverctl map normal $mod Right focus-view next
+riverctl map normal $mod Left focus-view previous
+riverctl map normal $mod+Shift Right swap next
+riverctl map normal $mod+Shift Left swap previous
+riverctl map normal $mod+Shift Return zoom
+riverctl map normal $mod Z focus-output next
+riverctl map normal $mod+Shift Z send-to-output next
+riverctl map normal $mod Space toggle-float
+riverctl map normal $mod F toggle-fullscreen
+riverctl map normal $mod D spawn rofi -combi-modi drun,ssh -show combi -modi combi
+
+riverctl map-pointer normal $mod BTN_LEFT move-view
+riverctl map-pointer normal $mod BTN_RIGHT resize-view
+
+# Mod+H and Mod+L to decrease/increase the main_factor value of rivertile by 0.05
+riverctl map normal $mod H mod-layout-value rivertile fixed main_factor -0.05
+riverctl map normal $mod L mod-layout-value rivertile fixed main_factor +0.05
+
+# Mod+Shift+H and Mod+Shift+L to increment/decrement the main_count value of rivertile.
+riverctl map normal $mod+Shift H mod-layout-value rivertile int main_count +1
+riverctl map normal $mod+Shift L mod-layout-value rivertile int main_count -1
+
+for i in $(seq 1 9)
+do
+    tags=$((1 << ($i - 1)))
+
+    # Mod+[1-9] to focus tag [0-8]
+    riverctl map normal $mod $i set-focused-tags $tags
+
+    # Mod+Shift+[1-9] to tag focused view with tag [0-8]
+    riverctl map normal $mod+Shift $i set-view-tags $tags
+
+    # Mod+Ctrl+[1-9] to toggle focus of tag [0-8]
+    riverctl map normal $mod+Control $i toggle-focused-tags $tags
+
+    # Mod+Shift+Ctrl+[1-9] to toggle tag [0-8] of focused view
+    riverctl map normal $mod+Shift+Control $i toggle-view-tags $tags
+done
+
+# Mod+0 to focus all tags
+# Mod+Shift+0 to tag focused view with all tags
+all_tags=$(((1 << 32) - 1))
+riverctl map normal $mod 0 set-focused-tags $all_tags
+riverctl map normal $mod+Shift 0 set-view-tags $all_tags
+
+# Declare a passthrough mode. This mode has only a single mapping to return to
+# normal mode. This makes it useful for testing a nested wayland compositor
+riverctl declare-mode passthrough
+riverctl map normal $mod F11 enter-mode passthrough
+riverctl map passthrough $mod F11 enter-mode normal
+
+for mode in normal locked
+do
+    riverctl map $mode None XF86Eject spawn eject -T
+
+    # Control pulse audio volume with pamixer (https://github.com/cdemoulins/pamixer)
+    riverctl map $mode None XF86AudioRaiseVolume  spawn pamixer -i 5
+    riverctl map $mode None XF86AudioLowerVolume  spawn pamixer -d 5
+    riverctl map $mode None XF86AudioMute         spawn pamixer --toggle-mute
+
+    # Control MPRIS aware media players with playerctl (https://github.com/altdesktop/playerctl)
+    riverctl map $mode None XF86AudioMedia spawn playerctl play-pause
+    riverctl map $mode None XF86AudioPlay  spawn playerctl play-pause
+    riverctl map $mode None XF86AudioPrev  spawn playerctl previous
+    riverctl map $mode None XF86AudioNext  spawn playerctl next
+
+    # Control screen backlight brighness with light (https://github.com/haikarainen/light)
+    riverctl map $mode None XF86MonBrightnessUp   spawn light -A 5
+    riverctl map $mode None XF86MonBrightnessDown spawn light -U 5
+done
+
+riverctl set-repeat 50 300
+
+riverctl float-filter-add "float"
+riverctl float-filter-add "popup"
+
+riverctl default-layout rivertile
+
+riverctl focus-follows-cursor normal
+riverctl attach-mode bottom
+
+riverctl border-color-focused '#0091ea'
+riverctl border-color-unfocused '#484848'
+riverctl border-width 1
+
+exec swaybg -i /usr/share/backgrounds/alaska_range_beautiful_mountain_landscape-wallpaper-3840x1200.jpg --mode fill &
+exec kanshi &
+exec waybar &
+exec rivertile -outer-padding 2 -view-padding 2

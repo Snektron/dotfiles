@@ -1,0 +1,50 @@
+{
+    "layer": "bottom",
+    "position": "bottom",
+    "height": 25,
+
+    "modules-left": [
+        "river/tags"
+    ],
+    "modules-right": [
+        "tray",
+        "cpu",
+        "memory",
+        "pulseaudio",
+        "clock"
+    ],
+    "cpu": {
+        "format": "{usage}% ",
+    },
+    "memory": {
+        "format": "{}% "
+    },
+    "tray": {
+        // "icon-size": 21,
+        "spacing": 10
+    },
+    "clock": {
+        // "timezone": "America/New_York",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "format-alt": "{:%Y-%m-%d}"
+    },
+    "pulseaudio": {
+        // "scroll-step": 1, // %, can be a float
+        "format": "{volume}% {icon} {format_source}",
+        "format-bluetooth": "{volume}% {icon} {format_source}",
+        "format-bluetooth-muted": " {icon} {format_source}",
+        "format-muted": " {format_source}",
+        "format-source": "{volume}% ",
+        "format-source-muted": "",
+        "format-icons": {
+            "headphone": "",
+            "hands-free": "",
+            "headset": "",
+            "phone": "",
+            "portable": "",
+            "car": "",
+            "default": ["", "", ""]
+        },
+        "on-click": "pavucontrol"
+    }
+}
