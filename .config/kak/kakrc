@@ -5,7 +5,7 @@ colorscheme lucius
 set-option global tabstop 4
 set-option global indentwidth 4
 
-hook global ModuleLoaded clang %{ set-option clang_options -std=c++20 }
+hook global ModuleLoaded clang %{ set-option clang_options -std=c++20 -Isrc -Iinclude -I. }
 
 # Enable editorconfig
 hook global BufOpenFile .* %{ editorconfig-load }
@@ -43,7 +43,7 @@ add-highlighter global/ show-matching
 add-highlighter global/ line '%val{cursor_line}' default,rgb:404040
 
 set-option global ui_options terminal_assistant=none
-set-option global startup_info_version 20210828
+set-option global startup_info_version 20211107
 set-option global scrolloff 1,3
 
 set-face global CurWord default+b
@@ -83,9 +83,12 @@ plug "NNBnh/clipb.kak" config %{
 # --- Commands ---
 define-command guard -docstring "Generate header guards for the current file" %{
     evaluate-commands %sh{
-        printf "exec i$kak_bufname<esc>xs(/|\.|$)<ret>r_xs^(include|src)_<ret>dI$(basename $PWD)_<esc>xs^($(basename $PWD)_){1,2}<ret>c$(basename $PWD)_<esc>x~yI#ifndef<space><esc>o#define<space><c-r>\"<ret><ret><ret>#endif<esc>kk"
+        p="$(basename $PWD)_"
+        printf "exec i$kak_bufname<esc>xs(/|\.)<ret>r_xs^(include|src)_<ret>dI$p<esc>xs^($p){1,2}<ret>c$p<esc>x~yI#ifndef<space>_<esc>o#define<space>_<c-r>\"<ret><ret><ret>#endif<esc>kk"
     }
 }
+
+plug "occivink/kakoune-sudo-write"
 
 # --- Key bindings ---
 # Word count
