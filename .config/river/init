@@ -23,18 +23,17 @@ riverctl map normal $mod Z focus-output next
 riverctl map normal $mod+Shift Z send-to-output next
 riverctl map normal $mod Space toggle-float
 riverctl map normal $mod F toggle-fullscreen
-riverctl map normal $mod D spawn rofi -combi-modi drun,ssh -show combi -modi combi
+riverctl map normal $mod D spawn 'rofi -combi-modi drun,ssh -show combi -modi combi'
+riverctl map normal None Print spawn /home/robin/.local/bin/screenshot.fish
 
 riverctl map-pointer normal $mod BTN_LEFT move-view
 riverctl map-pointer normal $mod BTN_RIGHT resize-view
 
-# Mod+H and Mod+L to decrease/increase the main_factor value of rivertile by 0.05
-riverctl map normal $mod H mod-layout-value rivertile fixed main_factor -0.05
-riverctl map normal $mod L mod-layout-value rivertile fixed main_factor +0.05
+riverctl map normal $mod H send-layout-cmd rivertile "main-ratio -0.05"
+riverctl map normal $mod L send-layout-cmd rivertile "main-ratio +0.05"
 
-# Mod+Shift+H and Mod+Shift+L to increment/decrement the main_count value of rivertile.
-riverctl map normal $mod+Shift H mod-layout-value rivertile int main_count +1
-riverctl map normal $mod+Shift L mod-layout-value rivertile int main_count -1
+riverctl map normal $mod+Shift H send-layout-cmd rivertile "main-count +1"
+riverctl map normal $mod+Shift L send-layout-cmd rivertile "main-count -1"
 
 for i in $(seq 1 9)
 do
@@ -87,19 +86,26 @@ done
 
 riverctl set-repeat 50 300
 
-riverctl float-filter-add "float"
-riverctl float-filter-add "popup"
+riverctl float-filter-add 'float'
+riverctl float-filter-add 'popup'
+riverctl float-filter-remove 'Spotify'
 
 riverctl default-layout rivertile
 
 riverctl focus-follows-cursor normal
 riverctl attach-mode bottom
 
-riverctl border-color-focused '#0091ea'
-riverctl border-color-unfocused '#484848'
+riverctl border-color-focused '0xeaea00'
+riverctl border-color-unfocused '0x484848'
 riverctl border-width 1
 
+export XKB_DEFAULT_MODEL=pc86
+export XKB_DEFAULT_LAYOUT=us
+export XKB_DEFAULT_OPTIONS=caps:hyper,compose:rctrl
+
+exec openrgb -p default.orp &
 exec swaybg -i /usr/share/backgrounds/alaska_range_beautiful_mountain_landscape-wallpaper-3840x1200.jpg --mode fill &
 exec kanshi &
 exec waybar &
-exec rivertile -outer-padding 2 -view-padding 2
+exec pipewire -c /home/robin/.config/pipewire/pipewire.conf &
+exec dbus-run-session rivertile -outer-padding 2 -view-padding 2

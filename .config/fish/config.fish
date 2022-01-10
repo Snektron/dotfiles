@@ -1,14 +1,17 @@
 fish_add_path $HOME/.local/bin/
-bass source ~/.local/share/lunarg-vulkan-sdk/1.2.176.1/setup-env.sh
+set -x LD_LIBRARY_PATH $HOME/.local/lib/
+bass source ~/.local/share/lunarg-vulkan-sdk/1.2.198.1/setup-env.sh
 
 set -x QT_QPA_PLATFORMTHEME qt5ct
 set -x QT_QPA_PLATFORM wayland
 set -x QT_WAYLAND_DISABLE_WINDOWDECORATION 1
 set -x SDL_VIDEODRIVER wayland
-set -x XDG_CURRENT_DESKTOP sway
+set -x XDG_CURRENT_DESKTOP river
 set -x XDG_SESSION_TYPE wayland
 set -x _JAVA_AWT_WM_NONREPARENTING 1
 set -x GDK_BACKEND wayland
+set -x CC /home/robin/programming/software/llvm-project/root/bin/clang
+set -x CXX /home/robin/programming/software/llvm-project/root/bin/clang++
 
 set gnome_schema org.gnome.desktop.interface
 gsettings set $gnome_schema gtk-theme Numix
