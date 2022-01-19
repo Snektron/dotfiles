@@ -1,5 +1,4 @@
 #!/bin/sh
-
 # This is the example configuration file for river.
 #
 # If you wish to edit this, you will probably want to copy it to
@@ -14,14 +13,19 @@ mod="Mod4"
 riverctl map normal $mod Return spawn alacritty
 riverctl map normal $mod Q close
 riverctl map normal $mod+Shift E exit
-riverctl map normal $mod Right focus-view next
-riverctl map normal $mod Left focus-view previous
-riverctl map normal $mod+Shift Right swap next
-riverctl map normal $mod+Shift Left swap previous
+riverctl map normal $mod J focus-view next
+riverctl map normal $mod K focus-view previous
+
+riverctl map normal $mod+Shift J swap next
+riverctl map normal $mod+Shift K swap previous
+
 riverctl map normal $mod+Shift Return zoom
+
 riverctl map normal $mod Z focus-output next
 riverctl map normal $mod+Shift Z send-to-output next
+
 riverctl map normal $mod Space toggle-float
+
 riverctl map normal $mod F toggle-fullscreen
 riverctl map normal $mod D spawn 'rofi -combi-modi drun,ssh -show combi -modi combi'
 riverctl map normal None Print spawn /home/robin/.local/bin/screenshot.fish
@@ -86,9 +90,9 @@ done
 
 riverctl set-repeat 50 300
 
-riverctl float-filter-add 'float'
-riverctl float-filter-add 'popup'
-riverctl float-filter-remove 'Spotify'
+riverctl float-filter-add app-id 'float'
+riverctl float-filter-add app-id 'popup'
+riverctl float-filter-remove app-id 'Spotify'
 
 riverctl default-layout rivertile
 
@@ -105,7 +109,7 @@ export XKB_DEFAULT_OPTIONS=caps:hyper,compose:rctrl
 
 exec openrgb -p default.orp &
 exec swaybg -i /usr/share/backgrounds/alaska_range_beautiful_mountain_landscape-wallpaper-3840x1200.jpg --mode fill &
-exec kanshi &
+# exec kanshi &
 exec waybar &
 exec pipewire -c /home/robin/.config/pipewire/pipewire.conf &
-exec dbus-run-session rivertile -outer-padding 2 -view-padding 2
+exec rivertile -outer-padding 2 -view-padding 2

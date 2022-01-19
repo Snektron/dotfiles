@@ -1,4 +1,5 @@
 fish_add_path $HOME/.local/bin/
+fish_add_path $HOME/programming/software/llvm-project/root/bin
 set -x LD_LIBRARY_PATH $HOME/.local/lib/
 bass source ~/.local/share/lunarg-vulkan-sdk/1.2.198.1/setup-env.sh
 

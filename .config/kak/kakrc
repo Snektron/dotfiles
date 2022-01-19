@@ -5,7 +5,18 @@ colorscheme lucius
 set-option global tabstop 4
 set-option global indentwidth 4
 
+# Disable default insert hooks
+set-option global disabled_hooks '.*-insert.*'
+
+# Trim trailing whitspaces on the entire file when saving the file.
+hook global BufWritePre .* %{
+    try %{ execute-keys -draft '%s\h+$<ret>d' }
+}
+
 hook global ModuleLoaded clang %{ set-option clang_options -std=c++20 -Isrc -Iinclude -I. }
+
+# Always reload the file on change
+set-option global autoreload yes
 
 # Enable editorconfig
 hook global BufOpenFile .* %{ editorconfig-load }
@@ -18,7 +29,7 @@ hook global BufNewFile .*\.(h|hh|hpp|hxx|H) guard
 # --- Language-specific settings ---
 hook global WinSetOption filetype=(c|cpp) %{
     clang-enable-autocomplete
-    clang-enable-diagnostics
+    # clang-enable-diagnostics
     alias window lint clang-parse
     alias window lint-next-error clang-diagnostics-next
 
@@ -80,6 +91,11 @@ plug "NNBnh/clipb.kak" config %{
     clipb-enable
 }
 
+eval %sh{kak-lsp --kakoune -s $kak_session}
+hook global WinSetOption filetype=(c|cpp) %{
+    lsp-enable-window
+}
+
 # --- Commands ---
 define-command guard -docstring "Generate header guards for the current file" %{
     evaluate-commands %sh{
@@ -102,7 +118,29 @@ map global normal <a-=> '|qalc -t +u8 -f -<ret>'
 map global normal <c-p> ':peneira-files<ret>'
 map global normal <c-b> ':peneira-buffers<ret>'
 
-map global normal <a-d> '<a-h><a-l>d'
-
 map global normal '#' ':comment-line<ret>'
 map global normal Q ':db<ret>'
+
+# Disable arrow keys
+map global insert <left> ''
+map global insert <right> ''
+map global insert <up> ''
+map global insert <down> ''
+
+map global normal <left> ''
+map global normal <right> ''
+map global normal <up> ''
+map global normal <down> ''
+
+map global normal <s-left> ''
+map global normal <s-right> ''
+map global normal <s-up> ''
+map global normal <s-down> ''
+
+# Change user mode key to space
+map global normal <space> , -docstring 'leader'
+map global normal <backspace> <space> -docstring 'Remove all except main selection'
+map global normal <a-backspace> <a-space> -docstring 'Remove main selection'
+
+# LSP mode
+map global user l %{:enter-user-mode lsp<ret>} -docstring 'Enter LSP mode'
