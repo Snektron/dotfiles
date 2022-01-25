@@ -20,6 +20,8 @@ gsettings set $gnome_schema cursor-theme Breeze_Obsidian
 gsettings set $gnome_schema icon-theme Numix-Circle
 gsettings set $gnome_schema font-name "Cantarell 10"
 
+eval (ssh-agent -c) >/dev/null
+
 function fish_user_key_bindings
     bind \ch backward-kill-word
 end
