@@ -107,9 +107,10 @@ export XKB_DEFAULT_MODEL=pc86
 export XKB_DEFAULT_LAYOUT=us
 export XKB_DEFAULT_OPTIONS=caps:hyper,compose:rctrl
 
-exec openrgb -p default.orp &
-exec swaybg -i /usr/share/backgrounds/alaska_range_beautiful_mountain_landscape-wallpaper-3840x1200.jpg --mode fill &
-# exec kanshi &
-exec waybar &
-exec pipewire -c /home/robin/.config/pipewire/pipewire.conf &
-exec rivertile -outer-padding 2 -view-padding 2
+svdir="/tmp/$(id -u)-sv-${WAYLAND_DISPLAY}"
+
+pgrep -f "^runsvdir ${svdir}" && exec echo "runsvdir already running for wayland session"
+
+cp -rLpT ~/.local/sv $svdir
+
+exec runsvdir $svdir

@@ -1,0 +1,2 @@
+#!/bin/sh
+exec openrgb -p default.orp
