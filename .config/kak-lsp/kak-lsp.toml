@@ -1,0 +1,12 @@
+[server]
+timout = 1800
+
+[language.c_cpp]
+filetypes = ["c", "cpp"]
+roots = [".clangd", ".git"]
+command = "clangd"
+
+[language.zig]
+filetypes = ["zig"]
+roots = [".git"]
+command = "zls"
