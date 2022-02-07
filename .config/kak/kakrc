@@ -1,4 +1,4 @@
-colorscheme lucius
+colorscheme afterglow
 
 # --- Editor settings --
 # Tab size of 4 spaces
@@ -55,7 +55,7 @@ hook global WinCreate .* %{ add-highlighter window/number-lines number-lines -re
 
 add-highlighter global/ regex \h+$ 0:Error
 add-highlighter global/ show-matching
-add-highlighter global/ line '%val{cursor_line}' default,rgb:404040
+add-highlighter global/ line '%val{cursor_line}' default,rgb:383838
 
 set-option global ui_options terminal_assistant=none
 set-option global startup_info_version 20211107
