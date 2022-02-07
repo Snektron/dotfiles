@@ -6,7 +6,11 @@ set-option global tabstop 4
 set-option global indentwidth 4
 
 # Disable default insert hooks
-set-option global disabled_hooks '.*-insert.*'
+set-option global disabled_hooks '.*-indent.*|.*-insert.*'
+
+hook global InsertChar \n %{
+    try %{ execute-keys -draft <semicolon> K <a-&> }
+}
 
 # Trim trailing whitspaces on the entire file when saving the file.
 hook global BufWritePre .* %{
@@ -37,7 +41,7 @@ hook global WinSetOption filetype=(c|cpp) %{
     set-option global disabled_hooks 'c-family-insert'
 }
 
-hook global WinSetOption filetype=latex %{
+hook global WinSetOption filetype=(latex|txt|text) %{
     # Add soft wrapping on long lines
     add-highlighter window/latex-word-wrap wrap -word -indent
 }
