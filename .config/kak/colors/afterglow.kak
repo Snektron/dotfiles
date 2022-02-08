@@ -32,3 +32,5 @@ face global SecondaryCursorEol rgb:2e2e2e,rgb:cdd0d8
 face global LineNumbers rgb:575757
 face global LineNumberCursor rgb:d6d6d6,rgb:424242
 face global LineNumbersWrapped rgb:575757+i
+face global BufferPadding rgb:6c99bb,rgb:2e2e2e
+face global MatchingChar default+u
