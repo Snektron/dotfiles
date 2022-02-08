@@ -41,6 +41,11 @@ hook global WinSetOption filetype=(c|cpp) %{
     set-option global disabled_hooks 'c-family-insert'
 }
 
+hook global WinSetOption filetype=zig %{
+    # Override some zig symbols to the proper type
+    add-highlighter -override shared/zig/code/ regex '\b(?:true|false|null|undefined)\b' 0:builtin
+}
+
 hook global WinSetOption filetype=(latex|txt|text) %{
     # Add soft wrapping on long lines
     add-highlighter window/latex-word-wrap wrap -word -indent
@@ -50,8 +55,13 @@ hook global WinSetOption filetype=(latex|txt|text) %{
 map global insert <tab> '<a-;><a-gt>'
 map global insert <s-tab> '<a-;><a-lt>'
 
+map global goto '}' '<esc><a-a>B;' -docstring 'closing brace'
+map global goto '{' '<esc><a-a>B<a-;>;' -docstring 'opening brace'
+
 # --- UI settings ---
-hook global WinCreate .* %{ add-highlighter window/number-lines number-lines -relative -hlcursor -separator ' ' }
+hook global WinCreate .* %{
+    add-highlighter window/number-lines number-lines -relative -hlcursor -separator ' '
+}
 
 add-highlighter global/ regex \h+$ 0:Error
 add-highlighter global/ show-matching
@@ -93,7 +103,10 @@ plug "gustavo-hms/luar" %{
 plug "NNBnh/clipb.kak" config %{
     clipb-detect
     clipb-enable
+    set-option global clipb_multiple_selections 'true'
 }
+
+plug "kkga/foot.kak"
 
 eval %sh{kak-lsp --kakoune -s $kak_session}
 hook global WinSetOption filetype=(c|cpp) %{
