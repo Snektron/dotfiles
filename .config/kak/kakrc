@@ -5,8 +5,8 @@ colorscheme afterglow
 set-option global tabstop 4
 set-option global indentwidth 4
 
-# Disable default insert hooks
-set-option global disabled_hooks '.*-indent.*|.*-insert.*'
+# Disable default insert and indent hooks
+set-option global disabled_hooks '.*-indent.*|.*-insert.*|c-family-insert'
 
 hook global InsertChar \n %{
     try %{ execute-keys -draft <semicolon> K <a-&> }
@@ -37,16 +37,18 @@ hook global WinSetOption filetype=(c|cpp) %{
     alias window lint clang-parse
     alias window lint-next-error clang-diagnostics-next
 
-    # Disable default header guard syntax
-    set-option global disabled_hooks 'c-family-insert'
+    # Override some symbols to the proper type
+    add-highlighter -override shared/cpp/code/ regex '\b(?:true|false|nullptr|this|NULL)\b' 0:builtin
+    add-highlighter -override shared/c/code/ regex '\b(?:true|false|nullptr|this|NULL)\b' 0:builtin
 }
 
 hook global WinSetOption filetype=zig %{
     # Override some zig symbols to the proper type
     add-highlighter -override shared/zig/code/ regex '\b(?:true|false|null|undefined)\b' 0:builtin
+    add-highlighter shared/zig/code/ regex '\b(?:anyopaque)\b' 0:type
 }
 
-hook global WinSetOption filetype=(latex|txt|text) %{
+hook global WinSetOption filetype=latex %{
     # Add soft wrapping on long lines
     add-highlighter window/latex-word-wrap wrap -word -indent
 }
@@ -54,6 +56,9 @@ hook global WinSetOption filetype=(latex|txt|text) %{
 # Tab settings (no tabs allowed)
 map global insert <tab> '<a-;><a-gt>'
 map global insert <s-tab> '<a-;><a-lt>'
+
+map global normal <tab> '<a-gt>'
+map global normal <s-tab> '<a-lt>'
 
 map global goto '}' '<esc><a-a>B;' -docstring 'closing brace'
 map global goto '{' '<esc><a-a>B<a-;>;' -docstring 'opening brace'
@@ -82,23 +87,35 @@ hook global NormalIdle .* %{
     } }
 }
 
+set-face global InsertCursor default,bright-blue
+
+hook global ModeChange .*:.*:insert %{
+    set-face window PrimaryCursor InsertCursor
+    set-face window PrimaryCursorEol InsertCursor
+}
+
+hook global ModeChange .*:insert:.* %{ try %{
+    unset-face window PrimaryCursor
+    unset-face window PrimaryCursorEol
+} }
+
+declare-option str cursor_line_len -hidden
+hook global WinCreate .* %{
+    hook window NormalIdle .* %{
+        eval -save-regs 'm' %{
+            exec -draft '<space>;<a-x>:reg m %reg{.}<ret>'
+            set window cursor_line_len %sh{printf "%s" "$kak_reg_m" | wc -m}
+        }
+    }
+}
+
+set-option global modelinefmt '%val{bufname} %val{cursor_line}/%val{buf_line_count}:%val{cursor_char_column}/%opt{cursor_line_len} {{context_info}} {{mode_info}} - %val{client}@[%val{session}]'
+
 # --- Plugins ---
+
 source "%val{config}/plugins/plug.kak/rc/plug.kak"
 
 plug "andreyorst/plug.kak" noload
-
-plug "gustavo-hms/luar" %{
-    require-module luar
-    plug "gustavo-hms/peneira" %{
-        require-module peneira
-
-        define-command peneira-buffers %{
-            peneira 'buffers: ' %{ printf '%s\n' $kak_quoted_buflist } %{ buffer %arg{1} }
-        }
-    }
-
-    set-option global luar_interpreter luajit
-}
 
 plug "NNBnh/clipb.kak" config %{
     clipb-detect
@@ -108,36 +125,60 @@ plug "NNBnh/clipb.kak" config %{
 
 plug "kkga/foot.kak"
 
+plug "occivink/kakoune-sudo-write"
+
+plug "kakoune-editor/kakoune-extra-filetypes"
+
 eval %sh{kak-lsp --kakoune -s $kak_session}
 hook global WinSetOption filetype=(c|cpp) %{
     lsp-enable-window
 }
 
 # --- Commands ---
+set-option global grepcmd 'rg -Hn --no-heading'
+
 define-command guard -docstring "Generate header guards for the current file" %{
-    evaluate-commands %sh{
+    eval %sh{
         p="$(basename $PWD)_"
         printf "exec i$kak_bufname<esc>xs(/|\.)<ret>r_xs^(include|src)_<ret>dI$p<esc>xs^($p){1,2}<ret>c$p<esc>x~yI#ifndef<space>_<esc>o#define<space>_<c-r>\"<ret><ret><ret>#endif<esc>kk"
     }
 }
 
-plug "occivink/kakoune-sudo-write"
+define-command rofi-buffers -docstring 'Select an open buffer using Rofi' %{
+    eval %sh{
+        BUFFER=$(printf "%s\n" "${kak_buflist}" | tr " " "\n" | rofi -dmenu -p buffers -i | tr -d \')
+        if [ -n "$BUFFER" ]; then
+            printf "%s\n" "buffer ${BUFFER}"
+        fi
+    }
+}
+
+define-command rofi-files -docstring 'Select a file using Rofi' %{
+    eval %sh{
+        BUFFER=$(fd | rofi -dmenu -p files -i | tr -d \')
+        if [ -n "$BUFFER" ]; then
+            printf "%s\n" "edit ${BUFFER}"
+        fi
+    }
+}
 
 # --- Key bindings ---
-# Word count
-map global user 'w' %{:echo %sh{wc -w <lt><lt><lt> "${kak_selection}"}<ret>}
+# Word & char count
+map global user 'w' %{:echo %sh{wc -w <lt><lt><lt> "$kak_selection"}<ret>} -docstring 'Count words in selection'
+map global user 'c' %{:echo %sh{printf "%s" "$kak_selection" | wc -m}<ret>} -docstring 'Count chars in selection'
 
 # Calculator
 map global normal '=' %{:prompt 'math: ' %{echo %sh{qalc -t +u8 "$kak_text"}}<ret>}
 map global normal '+' %{:prompt 'insert math: ' %{exec "!qalc -t +u8 ""%val{text}""<lt>ret>i<lt>backspace><lt>esc>"}<ret>}
 map global normal <a-=> '|qalc -t +u8 -f -<ret>'
 
-map global normal <c-p> ':peneira-files<ret>'
-map global normal <c-b> ':peneira-buffers<ret>'
+map global normal <c-p> ':rofi-files<ret>'
+map global normal <c-b> ':rofi-buffers<ret>'
 
 map global normal '#' ':comment-line<ret>'
 map global normal Q ':db<ret>'
 
+map global insert <s-backspace> <backspace>
 # Disable arrow keys
 map global insert <left> ''
 map global insert <right> ''

@@ -1,7 +1,7 @@
 fish_add_path $HOME/.local/bin/
 fish_add_path $HOME/programming/software/llvm-project/root/bin
 set -x LD_LIBRARY_PATH $HOME/.local/lib/
-bass source ~/.local/share/lunarg-vulkan-sdk/1.2.198.1/setup-env.sh
+bass source ~/.local/share/lunarg-vulkan-sdk/1.3.204.1/setup-env.sh
 
 set -x QT_QPA_PLATFORMTHEME qt5ct
 set -x QT_QPA_PLATFORM wayland
@@ -36,4 +36,12 @@ config config status.showUntrackedFiles no
 
 if status is-interactive
     tabs -4
+end
+
+function grep
+    echo "use ripgrep"
+end
+
+function find
+    echo "use fd"
 end

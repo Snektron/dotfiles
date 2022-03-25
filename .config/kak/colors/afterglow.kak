@@ -23,8 +23,8 @@ face global block rgb:8c8c8c
 face global link rgb:a1617a
 
 face global Default rgb:d6d6d6,rgb:2e2e2e
-face global PrimarySelection ,rgb:5a647e
-face global SecondarySelection ,rgb:485064
+face global PrimarySelection default,rgb:5a647e
+face global SecondarySelection default,rgb:485064
 face global PrimaryCursor rgb:2e2e2e,rgb:eeeff2
 face global SecondaryCursor rgb:2e2e2e,rgb:cdd0d8
 face global PrimaryCursorEol rgb:2e2e2e,rgb:eeeff2
