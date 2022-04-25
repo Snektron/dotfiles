@@ -13,11 +13,14 @@ hook global InsertChar \n %{
 }
 
 # Trim trailing whitspaces on the entire file when saving the file.
-hook global BufWritePre .* %{
+hook global BufWritePre .* -group auto-trim %{
     try %{ execute-keys -draft '%s\h+$<ret>d' }
 }
 
 hook global ModuleLoaded clang %{ set-option clang_options -std=c++20 -Isrc -Iinclude -I. }
+
+# Always create directories
+hook global BufWritePre .* mkdir
 
 # Always reload the file on change
 set-option global autoreload yes
@@ -27,8 +30,8 @@ hook global BufOpenFile .* %{ editorconfig-load }
 hook global BufNewFile .* %{ editorconfig-load }
 
 # Custom header guard syntax
-
 hook global BufNewFile .*\.(h|hh|hpp|hxx|H) guard
+
 
 # --- Language-specific settings ---
 hook global WinSetOption filetype=(c|cpp) %{
@@ -130,9 +133,12 @@ plug "occivink/kakoune-sudo-write"
 plug "kakoune-editor/kakoune-extra-filetypes"
 
 eval %sh{kak-lsp --kakoune -s $kak_session}
-hook global WinSetOption filetype=(c|cpp) %{
+
+hook global WinSetOption filetype=(c|cpp) -group c-cpp-lsp %{
     lsp-enable-window
 }
+
+source "%val{config}/rc/wiki.kak"
 
 # --- Commands ---
 set-option global grepcmd 'rg -Hn --no-heading'
@@ -155,17 +161,26 @@ define-command rofi-buffers -docstring 'Select an open buffer using Rofi' %{
 
 define-command rofi-files -docstring 'Select a file using Rofi' %{
     eval %sh{
-        BUFFER=$(fd | rofi -dmenu -p files -i | tr -d \')
+        BUFFER=$(fd --type f | rofi -dmenu -p files -i | tr -d \')
         if [ -n "$BUFFER" ]; then
             printf "%s\n" "edit ${BUFFER}"
         fi
     }
 }
 
+define-command trim -docstring 'Trim trailing whitespace in the current buffer' %{
+    try %{ execute-keys -draft '%s\h+$<ret>d' }
+}
+
+# Make directories for the current file
+define-command mkdir -docstring 'Make directories for the current file' %{
+    nop %sh{ mkdir -p "$(dirname "$kak_buffile")" }
+}
+
 # --- Key bindings ---
 # Word & char count
-map global user 'w' %{:echo %sh{wc -w <lt><lt><lt> "$kak_selection"}<ret>} -docstring 'Count words in selection'
-map global user 'c' %{:echo %sh{printf "%s" "$kak_selection" | wc -m}<ret>} -docstring 'Count chars in selection'
+map global user '<a-w>' %{:echo %sh{wc -w <lt><lt><lt> "$kak_selection"}<ret>} -docstring 'Count words in selection'
+map global user '<a-c>' %{:echo %sh{printf "%s" "$kak_selection" | wc -m}<ret>} -docstring 'Count chars in selection'
 
 # Calculator
 map global normal '=' %{:prompt 'math: ' %{echo %sh{qalc -t +u8 "$kak_text"}}<ret>}
@@ -205,3 +220,23 @@ map global user <a-space> <a-space> -docstring 'Remove main selection'
 
 # LSP mode
 map global user l %{:enter-user-mode lsp<ret>} -docstring 'Enter LSP mode'
+
+# WIKI mode
+map global user w ': wiki<ret>' -docstring 'Enter wiki mode'
+
+# Use enter to cycle checkboxes in wiki mode
+hook global WinSetOption filetype=wiki %{
+    map buffer normal <ret> ':wiki-cycle-checkbox<ret>' -docstring 'Cycle checkbox'
+}
+
+# --- Project ---
+
+# Look for local kakoune config and load it if its there
+eval %sh{
+    if [ -f .kakrc ]; then
+        printf "%s\n" "source $PWD/.kakrc"
+    fi
+    if [ -f .private/kakrc ]; then
+        printf "%s\n" "source $PWD/.private/kakrc"
+    fi
+}
