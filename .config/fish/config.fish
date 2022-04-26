@@ -1,6 +1,7 @@
 fish_add_path $HOME/.local/bin/
+fish_add_path $HOME/software/llvm/bin
 set -x LD_LIBRARY_PATH $HOME/.local/lib/
-bass source ~/.local/share/lunarg-vulkan-sdk/1.2.198.1/setup-env.sh
+bass source ~/.local/share/lunarg-vulkan-sdk/1.3.204.1/setup-env.sh
 
 set -x QT_QPA_PLATFORMTHEME qt5ct
 set -x QT_QPA_PLATFORM wayland
@@ -11,18 +12,20 @@ set -x XDG_SESSION_TYPE wayland
 set -x _JAVA_AWT_WM_NONREPARENTING 1
 set -x GDK_BACKEND wayland
 
+set -x CC /home/robin/software/llvm/bin/clang
+set -x CXX /home/robin/software/llvm/bin/clang++
+
 set gnome_schema org.gnome.desktop.interface
 gsettings set $gnome_schema gtk-theme Numix
 gsettings set $gnome_schema cursor-theme Breeze_Obsidian
 gsettings set $gnome_schema icon-theme Numix-Circle
 gsettings set $gnome_schema font-name "Cantarell 10"
 
-if test -z (pgrep ssh-agent)
-    eval (ssh-agent -c) >/dev/null
-    set -Ux SSH_AUTH_SOCK $SSH_AUTH_SOCK
-    set -Ux SSH_AGENT_PID $SSH_AGENT_PID
-    set -Ux SSH_AUTH_SOCK $SSH_AUTH_SOCK
-end
+gpgconf --launch gpg-agent
+set -e SSH_AUTH_SOCK
+set -U -x SSH_AUTH_SOCK (gpgconf --list-dirs agent-ssh-socket)
+set -x GPG_TTY (tty)
+gpg-connect-agent updatestartuptty /bye >/dev/null
 
 function fish_user_key_bindings
     bind \ch backward-kill-word
@@ -40,4 +43,12 @@ config config status.showUntrackedFiles no
 
 if status is-interactive
     tabs -4
+end
+
+function grep
+    echo "use rg"
+end
+
+function find
+    echo "use fd"
 end

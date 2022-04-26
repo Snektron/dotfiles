@@ -1,5 +1,5 @@
 rofi.modi: drun,ssh,combi
-rofi.terminal: alacritty
+rofi.terminal: foot
 rofi.separator-style: dash
 rofi.color-enabled: true
 

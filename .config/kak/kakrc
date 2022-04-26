@@ -1,4 +1,3 @@
-colorscheme lucius # untill i fix afterglow properly
 colorscheme afterglow
 
 # --- Editor settings --
@@ -6,18 +5,17 @@ colorscheme afterglow
 set-option global tabstop 4
 set-option global indentwidth 4
 
-# Disable default insert hooks
-# Disable default insert hooks
-set-option global disabled_hooks '.*-indent.*|.*-insert.*'
+# Disable default insert and indent hooks
+set-option global disabled_hooks '.*-indent.*|.*-insert.*|c-family-insert'
 
 hook global InsertChar \n %{
     try %{ execute-keys -draft <semicolon> K <a-&> }
 }
 
 # Trim trailing whitspaces on the entire file when saving the file.
-hook global BufWritePre .* %{
-    try %{ execute-keys -draft '%s\h+$<ret>d' }
-}
+# hook global BufWritePre .* %{
+#     try %{ execute-keys -draft '%s\h+$<ret>d' }
+# }
 
 hook global ModuleLoaded clang %{ set-option clang_options -std=c++20 -Isrc -Iinclude -I. }
 
@@ -39,13 +37,15 @@ hook global WinSetOption filetype=(c|cpp) %{
     alias window lint clang-parse
     alias window lint-next-error clang-diagnostics-next
 
-    # Disable default header guard syntax
-    set-option global disabled_hooks 'c-family-insert'
+    # Override some symbols to the proper type
+    add-highlighter -override shared/cpp/code/ regex '\b(?:true|false|nullptr|this|NULL)\b' 0:builtin
+    add-highlighter -override shared/c/code/ regex '\b(?:true|false|nullptr|this|NULL)\b' 0:builtin
 }
 
 hook global WinSetOption filetype=zig %{
     # Override some zig symbols to the proper type
     add-highlighter -override shared/zig/code/ regex '\b(?:true|false|null|undefined)\b' 0:builtin
+    add-highlighter shared/zig/code/ regex '\b(?:anyopaque)\b' 0:type
 }
 
 hook global WinSetOption filetype=latex %{
@@ -57,12 +57,20 @@ hook global WinSetOption filetype=latex %{
 map global insert <tab> '<a-;><a-gt>'
 map global insert <s-tab> '<a-;><a-lt>'
 
+map global normal <tab> '<a-gt>'
+map global normal <s-tab> '<a-lt>'
+
+map global goto '}' '<esc><a-a>B;' -docstring 'closing brace'
+map global goto '{' '<esc><a-a>B<a-;>;' -docstring 'opening brace'
+
 # --- UI settings ---
-hook global WinCreate .* %{ add-highlighter window/number-lines number-lines -relative -hlcursor -separator ' ' }
+hook global WinCreate .* %{
+    add-highlighter window/number-lines number-lines -relative -hlcursor -separator ' '
+}
 
 add-highlighter global/ regex \h+$ 0:Error
 add-highlighter global/ show-matching
-add-highlighter global/ line '%val{cursor_line}' default,rgb:404040
+add-highlighter global/ line '%val{cursor_line}' default,rgb:383838
 
 set-option global ui_options terminal_assistant=none
 set-option global startup_info_version 20211107
@@ -79,59 +87,102 @@ hook global NormalIdle .* %{
     } }
 }
 
+set-face global InsertCursor default,bright-blue
+
+hook global ModeChange .*:.*:insert %{
+    set-face window PrimaryCursor InsertCursor
+    set-face window PrimaryCursorEol InsertCursor
+}
+
+hook global ModeChange .*:insert:.* %{ try %{
+    unset-face window PrimaryCursor
+    unset-face window PrimaryCursorEol
+} }
+
+declare-option str cursor_line_len -hidden
+hook global WinCreate .* %{
+    hook window NormalIdle .* %{
+        eval -save-regs 'm' %{
+            exec -draft '<space>;<a-x>:reg m %reg{.}<ret>'
+            set window cursor_line_len %sh{printf "%s" "$kak_reg_m" | wc -m}
+        }
+    }
+}
+
+set-option global modelinefmt '%val{bufname} %val{cursor_line}/%val{buf_line_count}:%val{cursor_char_column}/%opt{cursor_line_len} {{context_info}} {{mode_info}} - %val{client}@[%val{session}]'
+
 # --- Plugins ---
+
 source "%val{config}/plugins/plug.kak/rc/plug.kak"
 
 plug "andreyorst/plug.kak" noload
 
-plug "gustavo-hms/luar" %{
-    require-module luar
-    plug "gustavo-hms/peneira" %{
-        require-module peneira
-
-        define-command peneira-buffers %{
-            peneira 'buffers: ' %{ printf '%s\n' $kak_quoted_buflist } %{ buffer %arg{1} }
-        }
-    }
-
-    set-option global luar_interpreter luajit
-}
-
 plug "NNBnh/clipb.kak" config %{
     clipb-detect
     clipb-enable
+    set-option global clipb_multiple_selections 'true'
 }
 
+plug "kkga/foot.kak"
+
+plug "occivink/kakoune-sudo-write"
+
+plug "kakoune-editor/kakoune-extra-filetypes"
+
 eval %sh{kak-lsp --kakoune -s $kak_session}
-hook global WinSetOption filetype=(c|cpp) %{
+hook global WinSetOption filetype=(c|cpp) -group c-cpp-lsp %{
     lsp-enable-window
 }
 
 # --- Commands ---
+set-option global grepcmd 'rg -Hn --no-heading'
+
 define-command guard -docstring "Generate header guards for the current file" %{
-    evaluate-commands %sh{
+    eval %sh{
         p="$(basename $PWD)_"
         printf "exec i$kak_bufname<esc>xs(/|\.)<ret>r_xs^(include|src)_<ret>dI$p<esc>xs^($p){1,2}<ret>c$p<esc>x~yI#ifndef<space>_<esc>o#define<space>_<c-r>\"<ret><ret><ret>#endif<esc>kk"
     }
 }
 
-plug "occivink/kakoune-sudo-write"
+define-command rofi-buffers -docstring 'Select an open buffer using Rofi' %{
+    eval %sh{
+        BUFFER=$(printf "%s\n" "${kak_buflist}" | tr " " "\n" | rofi -dmenu -p buffers -i | tr -d \')
+        if [ -n "$BUFFER" ]; then
+            printf "%s\n" "buffer ${BUFFER}"
+        fi
+    }
+}
+
+define-command rofi-files -docstring 'Select a file using Rofi' %{
+    eval %sh{
+        BUFFER=$(fd | rofi -dmenu -p files -i | tr -d \')
+        if [ -n "$BUFFER" ]; then
+            printf "%s\n" "edit ${BUFFER}"
+        fi
+    }
+}
+
+define-command trim -docstring 'Remove trailing whitespace in selection' %{
+    try %{ execute-keys -intersel -draft '%s\h+$<ret>d' }
+}
 
 # --- Key bindings ---
-# Word count
-map global user 'w' %{:echo %sh{wc -w <lt><lt><lt> "${kak_selection}"}<ret>}
+# Word & char count
+map global user 'w' %{:echo %sh{wc -w <lt><lt><lt> "$kak_selection"}<ret>} -docstring 'Count words in selection'
+map global user 'c' %{:echo %sh{printf "%s" "$kak_selection" | wc -m}<ret>} -docstring 'Count chars in selection'
 
 # Calculator
 map global normal '=' %{:prompt 'math: ' %{echo %sh{qalc -t +u8 "$kak_text"}}<ret>}
 map global normal '+' %{:prompt 'insert math: ' %{exec "!qalc -t +u8 ""%val{text}""<lt>ret>i<lt>backspace><lt>esc>"}<ret>}
 map global normal <a-=> '|qalc -t +u8 -f -<ret>'
 
-map global normal <c-p> ':peneira-files<ret>'
-map global normal <c-b> ':peneira-buffers<ret>'
+map global normal <c-p> ':rofi-files<ret>'
+map global normal <c-b> ':rofi-buffers<ret>'
 
 map global normal '#' ':comment-line<ret>'
 map global normal Q ':db<ret>'
 
+map global insert <s-backspace> <backspace>
 # Disable arrow keys
 map global insert <left> ''
 map global insert <right> ''
@@ -158,3 +209,13 @@ map global user <a-space> <a-space> -docstring 'Remove main selection'
 
 # LSP mode
 map global user l %{:enter-user-mode lsp<ret>} -docstring 'Enter LSP mode'
+
+# --- Local kakrc ---
+evaluate-commands %sh{
+    if [ -f .kakrc ]; then
+        printf "%s\n" "source '$PWD/.kakrc'"
+    fi
+    if [ -f .private/kakrc ]; then
+        printf "%s\n" "source '$PWD/.private/kakrc'"
+    fi
+}
