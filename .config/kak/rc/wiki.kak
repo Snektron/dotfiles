@@ -14,7 +14,7 @@
 # - dates?
 
 # Detection
-hook global BufCreate .*[.]wiki %{
+hook global BufCreate .*\.wiki$ %{
     set-option buffer filetype wiki
 }
 
@@ -138,7 +138,7 @@ hook global -group wiki-journal-date BufNewFile .*\.jnl\.wiki wiki-insert-date
 declare-user-mode wiki
 map global wiki c ': wiki-cycle-checkbox<ret>' -docstring 'Cycle checkbox'
 map global wiki d ': wiki-journal-today<ret>' -docstring 'Open journal for today'
-map global wiki t ': wiki-todo<ret' -docstring 'Show all TODOs'
+map global wiki t ': wiki-todo<ret>' -docstring 'Show all TODOs'
 define-command wiki -params 0 'enter-user-mode wiki' -docstring 'Wiki mode'
 
 §
