@@ -1,7 +1,7 @@
 fish_add_path $HOME/.local/bin/
 fish_add_path $HOME/software/llvm/bin
-set -x LD_LIBRARY_PATH $HOME/.local/lib/
 bass source ~/.local/share/lunarg-vulkan-sdk/1.3.204.1/setup-env.sh
+set -x LD_LIBRARY_PATH "$LD_LIBRARY_PATH:$HOME/.local/lib/"
 
 set -x QT_QPA_PLATFORMTHEME qt5ct
 set -x QT_QPA_PLATFORM wayland
@@ -51,4 +51,12 @@ end
 
 function find
     echo "use fd"
+end
+
+function xq
+    xbps-query $argv
+end
+
+function xr
+    xbps-remove $argv
 end
