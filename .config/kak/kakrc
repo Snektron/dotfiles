@@ -140,6 +140,7 @@ hook global WinSetOption filetype=(c|cpp) -group c-cpp-lsp %{
 
 source "%val{config}/rc/wiki.kak"
 source "%val{config}/rc/z80.kak"
+source "%val{config}/rc/bookmarks.kak"
 
 # --- Commands ---
 set-option global grepcmd 'rg -Hn --no-heading'
@@ -155,7 +156,7 @@ define-command rofi-buffers -docstring 'Select an open buffer using Rofi' %{
     eval %sh{
         BUFFER=$(printf "%s\n" "${kak_buflist}" | tr " " "\n" | rofi -dmenu -p buffers -i | tr -d \')
         if [ -n "$BUFFER" ]; then
-            printf "%s\n" "buffer ${BUFFER}"
+            printf "%s\n" "buffer '${BUFFER}'"
         fi
     }
 }
@@ -164,7 +165,7 @@ define-command rofi-files -docstring 'Select a file using Rofi' %{
     eval %sh{
         BUFFER=$(fd --type f | rofi -dmenu -p files -i | tr -d \')
         if [ -n "$BUFFER" ]; then
-            printf "%s\n" "edit ${BUFFER}"
+            printf "%s\n" "edit '${BUFFER}'"
         fi
     }
 }
@@ -182,6 +183,7 @@ define-command mkdir -docstring 'Make directories for the current file' %{
 # Word & char count
 map global user '<a-w>' %{:echo %sh{wc -w <lt><lt><lt> "$kak_selection"}<ret>} -docstring 'Count words in selection'
 map global user '<a-c>' %{:echo %sh{printf "%s" "$kak_selection" | wc -m}<ret>} -docstring 'Count chars in selection'
+map global user '<a-l>' %{:echo %sh{printf "%s" "$kak_selection" | wc -l}<ret>} -docstring 'Count lines in selection'
 
 # Calculator
 map global normal '=' %{:prompt 'math: ' %{echo %sh{qalc -t +u8 "$kak_text"}}<ret>}
@@ -226,6 +228,9 @@ map global user <a-space> <a-space> -docstring 'Remove main selection'
 
 # LSP mode
 map global user l %{:enter-user-mode lsp<ret>} -docstring 'Enter LSP mode'
+
+# Bookmark mode
+map global user b %{:enter-user-mode bookmarks<ret>} -docstring 'Enter bookmarks mode'
 
 # WIKI mode
 map global user w ': wiki<ret>' -docstring 'Enter wiki mode'

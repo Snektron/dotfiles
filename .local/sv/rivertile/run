@@ -1,2 +1,2 @@
 #!/bin/sh
-exec rivertile -view-padding 2 -outer-padding 2 -main-ratio 0.55
+exec rivertile -view-padding 2 -outer-padding 2 -main-ratio 0.50

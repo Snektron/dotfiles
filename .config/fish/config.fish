@@ -60,3 +60,11 @@ end
 function xr
     xbps-remove $argv
 end
+
+function gs
+    git status $argv
+end
+
+function gl
+    git log --oneline $argv
+end
